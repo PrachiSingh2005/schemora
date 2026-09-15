@@ -30,6 +30,7 @@ from sqlalchemy import select, delete
 from app.core.config import settings
 from app.models.knowledge import KnowledgeDocument, KnowledgeChunk
 from app.services.embedding_service import embed_text, embedding_to_json
+from app.services import chroma_service
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +280,7 @@ def build_chunks_for_scheme(s: Dict[str, Any]) -> List[Dict[str, Any]]:
 # ── DB operations ─────────────────────────────────────────────────────────────
 
 async def delete_scheme_knowledge(db: AsyncSession, scheme_id: str) -> int:
-    """Delete all knowledge chunks and documents for a scheme. Returns chunk count removed."""
+    """Delete all knowledge chunks and documents for a scheme from SQL and ChromaDB. Returns chunk count removed."""
     chunks_result = await db.execute(
         select(KnowledgeChunk).where(KnowledgeChunk.scheme_id == scheme_id)
     )
@@ -295,6 +296,9 @@ async def delete_scheme_knowledge(db: AsyncSession, scheme_id: str) -> int:
         await db.delete(doc)
 
     await db.flush()
+    # Synchronize vector deletion with ChromaDB
+    chroma_service.delete_chunks_by_scheme_id(scheme_id)
+
     return count
 
 
@@ -303,7 +307,7 @@ async def index_scheme(
     scheme_data: Dict[str, Any],
     replace: bool = True,
 ) -> Tuple[int, int]:
-    """Index a single scheme into the knowledge base.
+    """Index a single scheme into SQL DB and ChromaDB vector store.
 
     Args:
         db: Async DB session.
@@ -332,6 +336,7 @@ async def index_scheme(
     # Build semantic chunks
     raw_chunks = build_chunks_for_scheme(scheme_data)
     semantic_count = 0
+    chroma_chunks_data = []
 
     for chunk_dict in raw_chunks:
         content = chunk_dict["content"]
@@ -360,17 +365,43 @@ async def index_scheme(
             page_number=1,
         )
         db.add(chunk_obj)
+        await db.flush()
+
+        if is_semantic and isinstance(embedding, list):
+            chroma_chunks_data.append({
+                "id": str(chunk_obj.id),
+                "embedding": embedding,
+                "content": content,
+                "metadata": {
+                    "scheme_id": chunk_dict["scheme_id"],
+                    "scheme_name": chunk_dict["scheme_name"],
+                    "section": chunk_dict["section"],
+                    "jurisdiction": chunk_dict["jurisdiction"],
+                    "state": chunk_dict.get("state") or "",
+                    "category": chunk_dict["category"],
+                    "source_id": chunk_dict["source_id"],
+                    "official_info_url": chunk_dict["official_info_url"],
+                    "official_app_url": chunk_dict["official_app_url"],
+                    "last_verified_at": chunk_dict["last_verified_at"],
+                    "scheme_version": chunk_dict["scheme_version"],
+                }
+            })
 
     await db.commit()
+
+    # Synchronize vector storage with ChromaDB
+    if chroma_chunks_data:
+        chroma_service.add_or_update_chunks(chroma_chunks_data)
+
     logger.info(
         f"Indexed scheme {scheme_id}: {len(raw_chunks)} chunks "
-        f"({semantic_count} semantic, {len(raw_chunks) - semantic_count} TF-IDF)"
+        f"({semantic_count} semantic into ChromaDB, {len(raw_chunks) - semantic_count} TF-IDF fallback)"
     )
     return len(raw_chunks), semantic_count
 
 
 async def index_all_schemes(db: AsyncSession) -> Dict[str, Any]:
-    """Load Phase 0 dataset and index all schemes.
+    """Load Phase 0 dataset and index all schemes into SQL and ChromaDB.
 
     Returns a summary dict with counts.
     """
@@ -409,12 +440,13 @@ async def index_all_schemes(db: AsyncSession) -> Dict[str, Any]:
         "total_chunks": total_chunks,
         "semantic_chunks": total_semantic,
         "tfidf_chunks": total_chunks - total_semantic,
+        "chroma_vectors": chroma_service.get_collection_count(),
         "dataset_version": dataset_version,
     }
 
 
 async def get_knowledge_base_status(db: AsyncSession) -> Dict[str, Any]:
-    """Return current knowledge base statistics."""
+    """Return current knowledge base statistics including ChromaDB vector count."""
     from sqlalchemy import func, distinct
 
     # Total chunks
@@ -442,6 +474,7 @@ async def get_knowledge_base_status(db: AsyncSession) -> Dict[str, Any]:
         "total_chunks": total_chunks,
         "semantic_chunks": semantic_chunks,
         "tfidf_chunks": total_chunks - semantic_chunks,
+        "chroma_vectors": chroma_service.get_collection_count(),
         "indexed_schemes": indexed_schemes,
         "total_documents": total_docs,
         "embedding_model": getattr(settings, "GEMINI_EMBEDDING_MODEL", "text-embedding-004"),

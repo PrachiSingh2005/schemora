@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./schemora_dev.db"
 
+    # ChromaDB Vector Database
+    CHROMA_PERSIST_DIRECTORY: str = "./chroma_db"
+    CHROMA_COLLECTION_NAME: str = "schemora_knowledge_chunks"
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

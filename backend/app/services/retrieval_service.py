@@ -36,6 +36,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.knowledge import KnowledgeChunk
+from app.services import chroma_service
 from app.services.embedding_service import (
     embed_text,
     json_to_embedding,
@@ -309,11 +310,8 @@ async def retrieve_relevant_chunks(
 ) -> List[Dict[str, Any]]:
     """Retrieve the most relevant knowledge chunks for a user query.
 
-    Improvements over v1:
-      - Intent detection: automatically identifies query type.
-      - Query expansion: adds relevant terms to improve TF-IDF recall.
-      - Section-affinity boosting: rewards chunks from sections matching intent.
-      - Lowered MIN_SIMILARITY_THRESHOLD for better recall with TF-IDF.
+    Uses ChromaDB vector database for fast HNSW similarity search when dense
+    embeddings are active, with automatic fallback to SQL database scanning.
 
     Args:
         db: Async DB session.
@@ -334,92 +332,146 @@ async def retrieve_relevant_chunks(
 
     logger.info(f"Retrieval: intent={intent}, query='{query[:80]}'")
 
-    # Build DB query with filters
-    stmt = select(KnowledgeChunk)
-
-    if scheme_id:
-        stmt = stmt.where(
-            (KnowledgeChunk.scheme_id == scheme_id)
-            | (KnowledgeChunk.scheme_id == None)
-        )
-    if state:
-        # Include state-specific chunks AND central (state=NULL) chunks
-        stmt = stmt.where(
-            (KnowledgeChunk.state == state) | (KnowledgeChunk.state == None)
-        )
-    if category:
-        stmt = stmt.where(KnowledgeChunk.category == category)
-    if section:
-        stmt = stmt.where(KnowledgeChunk.section == section)
-
-    result = await db.execute(stmt)
-    chunks = result.scalars().all()
-
-    if not chunks:
-        logger.info(f"No knowledge chunks found for filters: scheme_id={scheme_id}, state={state}")
-        return []
-
     # Embed the expanded query
     query_embedding, is_semantic = await embed_text(expanded_query)
 
     # Section boost map for this intent
     section_boosts = INTENT_SECTION_BOOST.get(intent, {})
-
     scored = []
-    for chunk in chunks:
-        stored = json_to_embedding(chunk.embedding_json)
 
-        # Base vector similarity score
-        score = 0.0
-        if stored is not None:
-            chunk_is_dense = is_dense_embedding(stored)
-            query_is_dense = is_dense_embedding(query_embedding)
+    # ── Path A: Try ChromaDB Vector Database Search ────────────────────────────
+    if is_semantic and is_dense_embedding(query_embedding) and chroma_service.get_collection_count() > 0:
+        where_filter = {}
+        if scheme_id:
+            where_filter["scheme_id"] = scheme_id
+        if state:
+            where_filter["state"] = state
+        if category:
+            where_filter["category"] = category
+        if section:
+            where_filter["section"] = section
 
-            if query_is_dense and chunk_is_dense:
-                score = cosine_similarity_dense(query_embedding, stored)
-            elif not query_is_dense and not chunk_is_dense:
-                score = cosine_similarity_tfidf(query_embedding, stored)
-            else:
-                # Mismatch: compute TF-IDF on both sides
-                from app.services.embedding_service import _tfidf_vector
-                q_tfidf = _tfidf_vector(expanded_query) if query_is_dense else query_embedding
-                c_tfidf = _tfidf_vector(chunk.content)
-                score = cosine_similarity_tfidf(q_tfidf, c_tfidf)
+        chroma_results = chroma_service.query_similar_chunks(
+            query_embedding=query_embedding,
+            top_k=top_k * 3,
+            where_filter=where_filter,
+        )
 
-        # Intent-based section affinity boost
-        section_boost = section_boosts.get(chunk.section or "", 0.0)
+        for res in chroma_results:
+            meta = res.get("metadata", {})
+            c_section = meta.get("section", "general")
+            c_scheme_id = meta.get("scheme_id", "")
+            c_scheme_name = meta.get("scheme_name", "")
+            c_content = res.get("document", "")
 
-        # Keyword matching boost
-        kw_boost = _compute_keyword_boost(expanded_query, chunk)
+            # Create dummy chunk object for keyword boost helper
+            class _TempChunk:
+                pass
 
-        total_score = min(1.0, score + section_boost + kw_boost)
+            tc = _TempChunk()
+            tc.scheme_name = c_scheme_name
+            tc.category = meta.get("category", "")
+            tc.section = c_section
+            tc.content = c_content
+            tc.state = meta.get("state", "")
 
-        if total_score < MIN_SIMILARITY_THRESHOLD:
-            continue
+            base_score = res.get("similarity_score", 0.0)
+            section_boost = section_boosts.get(c_section, 0.0)
+            kw_boost = _compute_keyword_boost(expanded_query, tc)
 
-        scored.append({
-            "chunk_id": chunk.id,
-            "scheme_id": chunk.scheme_id,
-            "scheme_name": chunk.scheme_name or "",
-            "section": chunk.section or "general",
-            "content": chunk.content,
-            "similarity_score": round(total_score, 4),
-            "intent": intent,
+            total_score = min(1.0, base_score + section_boost + kw_boost)
+            if total_score < MIN_SIMILARITY_THRESHOLD:
+                continue
 
-            # Citation fields — use real URLs only
-            "source_url": chunk.official_info_url or "",
-            "source_title": f"{chunk.scheme_name or 'Official'} — {(chunk.section or 'Guideline').title()}",
-            "source_id": chunk.source_id or "",
-            "official_app_url": chunk.official_app_url or "",
-            "last_verified_at": chunk.last_verified_at or "2026-08-07",
-            "scheme_version": chunk.scheme_version or "v1",
+            scored.append({
+                "chunk_id": res.get("id"),
+                "scheme_id": c_scheme_id,
+                "scheme_name": c_scheme_name,
+                "section": c_section,
+                "content": c_content,
+                "similarity_score": round(total_score, 4),
+                "intent": intent,
+                "source_url": meta.get("official_info_url", ""),
+                "source_title": f"{c_scheme_name or 'Official'} — {c_section.title()}",
+                "source_id": meta.get("source_id", ""),
+                "official_app_url": meta.get("official_app_url", ""),
+                "last_verified_at": meta.get("last_verified_at", "2026-08-07"),
+                "scheme_version": meta.get("scheme_version", "v1"),
+                "jurisdiction": meta.get("jurisdiction", ""),
+                "state": meta.get("state", ""),
+                "category": meta.get("category", ""),
+                "is_semantic": True,
+                "vector_store": "chromadb",
+            })
 
-            # Context metadata
-            "jurisdiction": chunk.jurisdiction or "",
-            "state": chunk.state or "",
-            "category": chunk.category or "",
-            "is_semantic": chunk.is_indexed,
-        })
+    # ── Path B: Fallback to SQL DB Search ─────────────────────────────────────
+    if not scored:
+        stmt = select(KnowledgeChunk)
+        if scheme_id:
+            stmt = stmt.where(
+                (KnowledgeChunk.scheme_id == scheme_id)
+                | (KnowledgeChunk.scheme_id == None)
+            )
+        if state:
+            stmt = stmt.where(
+                (KnowledgeChunk.state == state) | (KnowledgeChunk.state == None)
+            )
+        if category:
+            stmt = stmt.where(KnowledgeChunk.category == category)
+        if section:
+            stmt = stmt.where(KnowledgeChunk.section == section)
+
+        result = await db.execute(stmt)
+        chunks = result.scalars().all()
+
+        if not chunks:
+            logger.info(f"No knowledge chunks found for filters: scheme_id={scheme_id}, state={state}")
+            return []
+
+        for chunk in chunks:
+            stored = json_to_embedding(chunk.embedding_json)
+            score = 0.0
+            if stored is not None:
+                chunk_is_dense = is_dense_embedding(stored)
+                query_is_dense = is_dense_embedding(query_embedding)
+
+                if query_is_dense and chunk_is_dense:
+                    score = cosine_similarity_dense(query_embedding, stored)
+                elif not query_is_dense and not chunk_is_dense:
+                    score = cosine_similarity_tfidf(query_embedding, stored)
+                else:
+                    from app.services.embedding_service import _tfidf_vector
+                    q_tfidf = _tfidf_vector(expanded_query) if query_is_dense else query_embedding
+                    c_tfidf = _tfidf_vector(chunk.content)
+                    score = cosine_similarity_tfidf(q_tfidf, c_tfidf)
+
+            section_boost = section_boosts.get(chunk.section or "", 0.0)
+            kw_boost = _compute_keyword_boost(expanded_query, chunk)
+            total_score = min(1.0, score + section_boost + kw_boost)
+
+            if total_score < MIN_SIMILARITY_THRESHOLD:
+                continue
+
+            scored.append({
+                "chunk_id": chunk.id,
+                "scheme_id": chunk.scheme_id,
+                "scheme_name": chunk.scheme_name or "",
+                "section": chunk.section or "general",
+                "content": chunk.content,
+                "similarity_score": round(total_score, 4),
+                "intent": intent,
+                "source_url": chunk.official_info_url or "",
+                "source_title": f"{chunk.scheme_name or 'Official'} — {(chunk.section or 'Guideline').title()}",
+                "source_id": chunk.source_id or "",
+                "official_app_url": chunk.official_app_url or "",
+                "last_verified_at": chunk.last_verified_at or "2026-08-07",
+                "scheme_version": chunk.scheme_version or "v1",
+                "jurisdiction": chunk.jurisdiction or "",
+                "state": chunk.state or "",
+                "category": chunk.category or "",
+                "is_semantic": chunk.is_indexed,
+                "vector_store": "sql_fallback",
+            })
 
     # Sort by score descending
     scored.sort(key=lambda x: x["similarity_score"], reverse=True)
@@ -436,7 +488,7 @@ async def retrieve_relevant_chunks(
             break
 
     logger.info(
-        f"Retrieved {len(deduped)}/{len(chunks)} chunks for query "
+        f"Retrieved {len(deduped)} chunks for query "
         f"(intent={intent}, semantic={is_semantic}, "
         f"top_score={deduped[0]['similarity_score'] if deduped else 0})"
     )

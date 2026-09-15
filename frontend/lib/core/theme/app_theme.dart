@@ -12,6 +12,7 @@ class AppTheme {
   static const Color vibrantEmerald = Color(0xFF059669);
   static const Color warningOrange = Color(0xFFD97706);
   static const Color saffronGold = Color(0xFFD97706);
+  static const Color amberOrange = Color(0xFFF59E0B);
   static const Color errorRed = Color(0xFFDC2626);
   static const Color accentRose = Color(0xFFDB2777);
   static const Color surfaceLight = Color(0xFFF8FAFC);

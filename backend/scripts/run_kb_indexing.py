@@ -15,6 +15,7 @@ async def main():
         print(f"Total chunks created: {res['total_chunks']}")
         print(f"Semantic chunks: {res['semantic_chunks']}")
         print(f"TF-IDF chunks: {res['tfidf_chunks']}")
+        print(f"ChromaDB vectors: {res.get('chroma_vectors', 0)}")
 
 if __name__ == "__main__":
     asyncio.run(main())
