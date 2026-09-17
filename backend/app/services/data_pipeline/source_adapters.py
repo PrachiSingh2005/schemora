@@ -198,3 +198,42 @@ class LocalRawFileSource(SchemeDataSource):
 
         logger.info(f"LocalRawFileSource loaded {len(results)} total records.")
         return results
+
+
+class WebScraperSource(SchemeDataSource):
+    """Web Scraper data source adapter targeting official scheme portals."""
+
+    def __init__(self, target_urls: Optional[List[str]] = None):
+        self.target_urls = target_urls or [
+            "https://www.myscheme.gov.in/schemes/pm-vidyalaxmi",
+            "https://mahadbt.maharashtra.gov.in/SchemeData/PostMatric",
+            "https://scholarships.gov.in/nsp-guidelines",
+        ]
+
+    def fetch_schemes(self) -> List[Dict[str, Any]]:
+        import asyncio
+        from app.services.scraper.portal_scraper import GovernmentPortalScraper
+
+        logger.info(f"WebScraperSource: Fetching scheme details from {len(self.target_urls)} target URLs...")
+        scraper = GovernmentPortalScraper()
+
+        try:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                # Running inside existing event loop
+                import nest_asyncio
+                nest_asyncio.apply()
+                records = loop.run_until_complete(scraper.scrape_schemes(self.target_urls))
+            else:
+                records = asyncio.run(scraper.scrape_schemes(self.target_urls))
+
+            logger.info(f"WebScraperSource extracted {len(records)} raw scheme records.")
+            return records
+        except Exception as e:
+            logger.error(f"WebScraperSource failed to scrape schemes: {e}")
+            return []
+

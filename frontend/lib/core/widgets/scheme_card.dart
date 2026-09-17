@@ -23,6 +23,10 @@ class SchemeCard extends StatelessWidget {
     final tagColor = isCentral ? AppTheme.primaryBlue : AppTheme.successGreen;
     final tagBorder = isCentral ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0);
 
+    final hasState = scheme.state != null && scheme.state!.isNotEmpty;
+    final hasCategory = scheme.benefitType.isNotEmpty;
+    final hasBeneficiaries = scheme.beneficiaries != null && scheme.beneficiaries!.isNotEmpty;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -42,7 +46,78 @@ class SchemeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top row: Title and Bookmark
+                // Tags Row: Category, Jurisdiction, State
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: tagBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: tagBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isCentral ? Icons.account_balance_rounded : Icons.location_city_rounded,
+                            size: 13,
+                            color: tagColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            scheme.jurisdiction,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: tagColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (hasState)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFEDD5)),
+                        ),
+                        child: Text(
+                          scheme.state!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.warningOrange,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    if (hasCategory)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E8FF),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE9D5FF)),
+                        ),
+                        child: Text(
+                          scheme.benefitType,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF7E22CE),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Title and Bookmark
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -96,39 +171,62 @@ class SchemeCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
+                if (scheme.benefitSummary.isNotEmpty && scheme.benefitSummary != scheme.shortDescription) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.card_giftcard_rounded, size: 14, color: AppTheme.primaryBlue),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            scheme.benefitSummary,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryNavy,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (hasBeneficiaries) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.people_alt_rounded, size: 13, color: AppTheme.textMuted),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Beneficiaries: ${scheme.beneficiaries}',
+                          style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
                 const SizedBox(height: 12),
 
-                // Bottom row: Jurisdiction Tag, Provider, Arrow
+                // Bottom row: Provider & View Details button
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: tagBg,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: tagBorder),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isCentral ? Icons.account_balance_rounded : Icons.location_city_rounded,
-                            size: 13,
-                            color: tagColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            scheme.jurisdiction,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: tagColor,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         scheme.provider,
@@ -142,15 +240,29 @@ class SchemeCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.all(5),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryBlue.withAlpha(15),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 15,
-                        color: AppTheme.primaryBlue,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text(
+                            'View Details',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryBlue,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 13,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ],
                       ),
                     ),
                   ],

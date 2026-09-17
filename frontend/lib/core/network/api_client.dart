@@ -26,8 +26,12 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
-        if (options.path.startsWith('/')) {
-          options.path = options.path.substring(1);
+        final activeBaseUrl = EnvConfig.baseUrl;
+        if (!options.path.startsWith('http')) {
+          options.baseUrl = activeBaseUrl;
+          if (options.path.startsWith('/')) {
+            options.path = options.path.substring(1);
+          }
         }
         debugPrint('[HTTP REQUEST] ${options.method} ${options.uri}');
         return handler.next(options);

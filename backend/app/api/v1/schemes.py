@@ -40,7 +40,7 @@ from fastapi import Response
 
 _SCHEMES_CACHE_JSON = None
 _SCHEMES_CACHE_TIME = 0.0
-_CACHE_TTL_SECONDS = 60.0
+_CACHE_TTL_SECONDS = 3600.0
 
 
 def invalidate_schemes_cache():
@@ -55,15 +55,16 @@ async def list_schemes(
     q: Optional[str] = Query(None, description="Search query string"),
     jurisdiction: Optional[str] = Query(None, description="Filter by jurisdiction: Central or State"),
     state: Optional[str] = Query(None, description="Filter by domicile state"),
+    category: Optional[str] = Query(None, description="Filter by scheme category"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(200, ge=1, le=500),
+    page_size: int = Query(500, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve paginated catalog of published schemes with filtering."""
     global _SCHEMES_CACHE_JSON, _SCHEMES_CACHE_TIME
 
     now = time.time()
-    is_unfiltered_catalog = not q and not jurisdiction and not state and page == 1 and page_size >= 150
+    is_unfiltered_catalog = not q and not jurisdiction and not state and not category and page == 1
 
     if is_unfiltered_catalog and _SCHEMES_CACHE_JSON is not None and (now - _SCHEMES_CACHE_TIME) < _CACHE_TTL_SECONDS:
         return Response(content=_SCHEMES_CACHE_JSON, media_type="application/json")
@@ -73,19 +74,35 @@ async def list_schemes(
         Scheme.provider, Scheme.jurisdiction, Scheme.state,
         Scheme.benefit_type, Scheme.benefit_summary,
         Scheme.implementation_status, Scheme.is_published,
-        Scheme.application_deadline
+        Scheme.application_deadline, Scheme.source_url, Scheme.source_name,
+        Scheme.official_scheme_url, Scheme.application_url, Scheme.official_portal_url,
+        Scheme.beneficiaries, Scheme.detailed_description
     ).where(Scheme.is_published == True)
 
     if jurisdiction:
-        stmt = stmt.where(Scheme.jurisdiction == jurisdiction)
+        stmt = stmt.where(func.lower(Scheme.jurisdiction) == jurisdiction.lower())
     if state:
-        stmt = stmt.where((Scheme.state == state) | (Scheme.state == None))
+        stmt = stmt.where((func.lower(Scheme.state) == state.lower()) | (Scheme.state == None))
+    if category:
+        c_lower = category.lower()
+        stmt = stmt.where(
+            (func.lower(Scheme.benefit_type).contains(c_lower))
+            | (func.lower(Scheme.short_description).contains(c_lower))
+            | (func.lower(Scheme.title).contains(c_lower))
+        )
     if q:
         q_lower = q.lower()
         stmt = stmt.where(
             (func.lower(Scheme.title).contains(q_lower))
             | (func.lower(Scheme.short_description).contains(q_lower))
+            | (func.lower(Scheme.detailed_description).contains(q_lower))
+            | (func.lower(Scheme.provider).contains(q_lower))
+            | (func.lower(Scheme.benefit_type).contains(q_lower))
+            | (func.lower(Scheme.beneficiaries).contains(q_lower))
+            | (func.lower(Scheme.state).contains(q_lower))
         )
+
+    stmt = stmt.order_by(Scheme.title.asc())
 
     res = await db.execute(stmt)
     rows = res.all()
@@ -94,23 +111,41 @@ async def list_schemes(
     start_idx = (page - 1) * page_size
     paginated_rows = rows[start_idx : start_idx + page_size]
 
-    items_data = [
-        SchemeResponse(
-            id=r[0],
-            slug=r[1] or '',
-            title=r[2],
-            short_description=r[3] or '',
-            provider=r[4] or 'Government',
-            jurisdiction=r[5] or 'Central',
-            state=r[6],
-            benefit_type=r[7] or 'Financial',
-            benefit_summary=r[8] or '',
-            implementation_status=r[9] or 'Implemented',
-            is_published=r[10],
-            application_deadline=r[11],
+    items_data = []
+    for r in paginated_rows:
+        src_url = r[12]
+        src_name = r[13] or ("myScheme" if src_url and "myscheme.gov.in" in src_url.lower() else "Official Portal")
+        off_scheme_url = r[14] or src_url
+        app_url = r[15] if (r[15] and "myscheme.gov.in" not in r[15].lower()) else None
+        off_portal_url = r[16] or off_scheme_url
+
+        best_apply = app_url or (off_scheme_url if off_scheme_url and "myscheme.gov.in" not in off_scheme_url.lower() else None)
+        best_info = off_scheme_url or src_url
+
+        items_data.append(
+            SchemeResponse(
+                id=r[0],
+                slug=r[1] or '',
+                title=r[2],
+                short_description=r[3] or '',
+                provider=r[4] or 'Government',
+                jurisdiction=r[5] or 'Central',
+                state=r[6],
+                benefit_type=r[7] or 'Financial',
+                benefit_summary=r[8] or '',
+                beneficiaries=r[17],
+                implementation_status=r[9] or 'Implemented',
+                is_published=r[10],
+                application_deadline=r[11],
+                source_url=src_url,
+                source_name=src_name,
+                official_scheme_url=off_scheme_url,
+                application_url=app_url,
+                official_portal_url=off_portal_url,
+                best_apply_url=best_apply,
+                best_info_url=best_info,
+            )
         )
-        for r in paginated_rows
-    ]
 
     total_pages = max(1, -(-total_items // page_size))
 
@@ -135,6 +170,7 @@ async def list_schemes(
         _SCHEMES_CACHE_TIME = now
 
     return resp_obj
+
 
 
 @router.get("/categories", response_model=APIResponse[List[str]], summary="Get Scheme Categories")
@@ -246,53 +282,61 @@ async def check_eligibility_direct(
     )
 
 
-@router.get("/recommendations", response_model=APIResponse[RecommendationResponse], summary="Calculate Recommendations")
-@router.post("/recommendations", response_model=APIResponse[RecommendationResponse], summary="Calculate Recommendations")
+@router.get("/recommendations", summary="Calculate Recommendations")
+@router.post("/recommendations", summary="Calculate Recommendations")
 async def get_recommendations(
     category: Optional[str] = Query(None, description="Active profile category filter"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Calculate real-time scheme recommendations and Top 3 for authenticated student."""
+    """Calculate real-time scheme recommendations for authenticated student using Recommendation Engine."""
+    from app.services.recommendation_service import generate_recommendations
+
     prof_res = await db.execute(select(StudentProfile).where(StudentProfile.user_id == current_user.id))
     profile = prof_res.scalar_one_or_none()
 
-    if not profile:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Student profile not found. Please complete your profile before requesting recommendations.",
-        )
-
-    query = select(Scheme).options(selectinload(Scheme.rules)).where(Scheme.is_published == True)
-    schemes_res = await db.execute(query)
-    schemes = schemes_res.scalars().all()
-
-    evaluations = [evaluate_scheme_eligibility(s, profile) for s in schemes]
-
-    for ev in evaluations:
-        scheme_id = ev["scheme_id"]
-        matched_scheme = next((s for s in schemes if s.id == scheme_id), None)
-        if matched_scheme:
-            if category and matched_scheme.scheme_category and matched_scheme.scheme_category.lower() == category.lower():
-                ev["confidence_score"] = min(1.0, ev["confidence_score"] + 0.3)
-            if profile and profile.state and matched_scheme.state and matched_scheme.state.lower() == profile.state.lower():
-                ev["confidence_score"] = min(1.0, ev["confidence_score"] + 0.2)
-
-    evaluations.sort(key=lambda x: (x["status"] == "RuleMatched", x["confidence_score"]), reverse=True)
-
-    top3 = rank_and_select_top3(evaluations)
-
-    resp_data = RecommendationResponse(
-        total_evaluated=len(evaluations),
-        top3_recommendations=[RecommendationItem(**item) for item in top3],
-        all_evaluations=[RecommendationItem(**item) for item in evaluations],
+    rec_res = await generate_recommendations(
+        db=db,
+        profile=profile,
     )
+
+    items = []
+    for r in rec_res.recommendations:
+        status_str = "RuleMatched" if r.match_type == "LIKELY_MATCH" else "NeedsInformation"
+        items.append({
+            "scheme_id": r.scheme_id,
+            "scheme_title": r.scheme_name,
+            "provider": r.provider or "Government",
+            "jurisdiction": r.jurisdiction or "Central",
+            "status": status_str,
+            "confidence_score": r.score,
+            "matched_rules_count": len(r.match_reasons),
+            "unresolved_rules_count": 0 if r.match_type == "LIKELY_MATCH" else 1,
+            "failed_rules_count": 0,
+            "benefit_summary": r.benefits or r.relevance_explanation,
+            "unresolved_fields": [],
+            "relevance_explanation": r.relevance_explanation,
+            "official_scheme_url": r.official_scheme_url,
+            "application_url": r.application_url,
+            "match_type": r.match_type,
+            "match_reasons": r.match_reasons,
+        })
+
+    resp_data = {
+        "total_evaluated": rec_res.debug_info.get("total_candidate_schemes", len(items)),
+        "profile_incomplete": rec_res.profile_incomplete,
+        "missing_fields": rec_res.missing_fields,
+        "top3_recommendations": items[:3],
+        "all_evaluations": items,
+        "recommendations": [rec.model_dump() for rec in rec_res.recommendations],
+    }
 
     return APIResponse(
         success=True,
         message="Scheme recommendations calculated successfully",
         data=resp_data,
     )
+
 
 
 @router.get("/{scheme_id}", response_model=APIResponse[SchemeDetailResponse], summary="Get Scheme Details")

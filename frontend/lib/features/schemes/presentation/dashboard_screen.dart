@@ -1070,18 +1070,43 @@ class _SchemesTab extends ConsumerStatefulWidget {
 class _SchemesTabState extends ConsumerState<_SchemesTab> {
   String? _activeCategory;
   late final TextEditingController _queryController;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _activeCategory = widget.initialCategory;
     _queryController = TextEditingController(text: widget.initialQuery);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(allSchemesProvider);
+    });
   }
 
   @override
   void dispose() {
     _queryController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   @override
@@ -1193,6 +1218,48 @@ class _SchemesTabState extends ConsumerState<_SchemesTab> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 70),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryNavy,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(50),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+                tooltip: 'Scroll to Top',
+                onPressed: _scrollToTop,
+              ),
+              const Text(
+                'SCROLL',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_downward_rounded, color: Colors.white, size: 20),
+                tooltip: 'Scroll to Bottom',
+                onPressed: _scrollToBottom,
+              ),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -1202,6 +1269,14 @@ class _SchemesTabState extends ConsumerState<_SchemesTab> {
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: Color(0xFF0F172A)),
         ),
         actions: [
+          if (hasFilter)
+            TextButton(
+              onPressed: () => setState(() {
+                _activeCategory = null;
+                _queryController.clear();
+              }),
+              child: const Text('Show All 66', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryBlue)),
+            ),
           IconButton(icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF475569)), tooltip: 'AI Recommendations', onPressed: () => context.push('/recommendations')),
           const SizedBox(width: 4),
         ],
@@ -1323,49 +1398,152 @@ class _SchemesTabState extends ConsumerState<_SchemesTab> {
                   );
                 }
                 final savedIds = ref.watch(savedSchemeIdsProvider).value ?? {};
-                return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, i) {
-                    final item = filtered[i];
-                    final isSaved = savedIds.contains(item.id);
-                    return _SchemeCard(
-                      scheme: item,
-                      isSaved: isSaved,
-                      selectedSector: _activeCategory ?? 'All',
-                      selectedState: '',
-                      onSave: () async {
-                        try {
-                          final nowSaved = await ref
-                              .read(savedSchemeIdsProvider.notifier)
-                              .toggleSave(item.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  nowSaved
-                                      ? 'Scheme saved to My Saved Schemes!'
-                                      : 'Scheme removed from Saved Schemes.',
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue.withAlpha(15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.apps_rounded, size: 14, color: AppTheme.primaryBlue),
+                                const SizedBox(width: 4),
+                                Text(
+                                  filtered.length < schemes.length
+                                      ? 'Showing ${filtered.length} of ${schemes.length} schemes'
+                                      : '${schemes.length} schemes available',
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryBlue,
+                                  ),
                                 ),
-                                action: SnackBarAction(
-                                  label: 'View All',
-                                  onPressed: () => context.push('/saved-schemes'),
+                                if (filtered.length < schemes.length) ...[
+                                  const SizedBox(width: 6),
+                                  InkWell(
+                                    onTap: () => setState(() {
+                                      _activeCategory = null;
+                                      _queryController.clear();
+                                    }),
+                                    child: const Text(
+                                      '(Show All 66)',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.warningOrange,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: _scrollToTop,
+                                borderRadius: BorderRadius.circular(6),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.arrow_upward_rounded, size: 13, color: AppTheme.primaryBlue),
+                                      SizedBox(width: 2),
+                                      Text('Top', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                                    ],
+                                  ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: _scrollToBottom,
+                                borderRadius: BorderRadius.circular(6),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.arrow_downward_rounded, size: 13, color: AppTheme.primaryBlue),
+                                      SizedBox(width: 2),
+                                      Text('Bottom', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          ref.invalidate(allSchemesProvider);
+                          await ref.read(allSchemesProvider.future);
+                        },
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          trackVisibility: true,
+                          thickness: 7.0,
+                          radius: const Radius.circular(8.0),
+                          child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, i) {
+                            final item = filtered[i];
+                            final isSaved = savedIds.contains(item.id);
+                            return _SchemeCard(
+                              scheme: item,
+                              isSaved: isSaved,
+                              selectedSector: _activeCategory ?? 'All',
+                              selectedState: '',
+                              onSave: () async {
+                                try {
+                                  final nowSaved = await ref
+                                      .read(savedSchemeIdsProvider.notifier)
+                                      .toggleSave(item.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          nowSaved
+                                              ? 'Scheme saved to My Saved Schemes!'
+                                              : 'Scheme removed from Saved Schemes.',
+                                        ),
+                                        action: SnackBarAction(
+                                          label: 'View All',
+                                          onPressed: () => context.push('/saved-schemes'),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to update bookmark: $e')),
+                                    );
+                                  }
+                                }
+                              },
+                              onTap: () => context.push('/catalog/${item.id}'),
+                              onChecklist: () => context.push('/checklist/${item.id}'),
                             );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to update bookmark: $e')),
-                            );
-                          }
-                        }
-                      },
-                      onTap: () => context.push('/catalog/${item.id}'),
-                      onChecklist: () => context.push('/checklist/${item.id}'),
-                    );
-                  },
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  ],
                 );
               },
             ),

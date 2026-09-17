@@ -24,6 +24,7 @@ from app.services.data_pipeline.source_adapters import (
     OfficialMinistrySource,
     OfficialStateSource,
     LocalRawFileSource,
+    WebScraperSource,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -46,7 +47,10 @@ def run_ingestion() -> Path:
     # 2. Data.gov.in official open data feed adapter
     sources.append(DataGovSource())
 
-    # 3. Local authorized exports / seed dataset files
+    # 3. Web Scraper adapter for official government portals
+    sources.append(WebScraperSource())
+
+    # 4. Local authorized exports / seed dataset files
     local_files = [
         raw_dir / "schemes_input.json",
         raw_dir / "schemes_input.csv",

@@ -2,7 +2,7 @@ import asyncio
 import sys
 from app.core.database import AsyncSessionLocal
 from app.services.retrieval_service import retrieve_relevant_chunks
-from app.services.gemini_service import generate_grounded_chat_response
+from app.services.groq_service import generate_grounded_chat_response
 
 sys.stdout.reconfigure(encoding='utf-8')
 

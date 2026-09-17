@@ -36,9 +36,17 @@ class SchemeResponse(BaseModel):
     state: Optional[str] = None
     benefit_type: str
     benefit_summary: str
+    beneficiaries: Optional[str] = None
     implementation_status: str
     is_published: bool
     application_deadline: Optional[str] = None
+    source_url: Optional[str] = None
+    source_name: Optional[str] = "Official Portal"
+    official_scheme_url: Optional[str] = None
+    application_url: Optional[str] = None
+    official_portal_url: Optional[str] = None
+    best_apply_url: Optional[str] = None
+    best_info_url: Optional[str] = None
 
 
 class SchemeDetailResponse(SchemeResponse):

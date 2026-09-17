@@ -70,18 +70,40 @@ class KnowledgeChunk(Base):
 
     # ── Source citation fields ────────────────────────────────────────────────
     source_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    source_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     official_info_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     official_app_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    official_scheme_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    official_portal_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     last_verified_at: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     scheme_version: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     # ── Embedding + legacy metadata ───────────────────────────────────────────
-    # embedding_json stores a JSON float array (Gemini embeddings) or
-    # a TF-IDF dict {word: score} as fallback.
+    # embedding_json stores a JSON float array or a TF-IDF dict {word: score}.
     embedding_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     metadata_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    # Whether Gemini semantic embedding has been generated for this chunk
+    # pgvector embedding column for native PostgreSQL vector similarity search
+    # Uses dialect-aware TypeDecorator so SQLite dev DBs compile cleanly while
+    # PostgreSQL production DBs use native HNSW pgvector Vector(768).
+    try:
+        from sqlalchemy.types import TypeDecorator
+        from pgvector.sqlalchemy import Vector as PgVector
+
+        class SafeVector(TypeDecorator):
+            impl = Text
+            cache_ok = True
+
+            def load_dialect_impl(self, dialect):
+                if dialect.name == "postgresql":
+                    return dialect.type_descriptor(PgVector(768))
+                return dialect.type_descriptor(Text())
+
+        embedding_vec = mapped_column(SafeVector(), nullable=True)
+    except Exception:
+        embedding_vec = mapped_column(Text, nullable=True)
+
+    # Whether semantic vector embedding has been generated for this chunk
     is_indexed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     document: Mapped["KnowledgeDocument"] = relationship("KnowledgeDocument", back_populates="chunks")

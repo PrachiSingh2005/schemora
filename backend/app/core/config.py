@@ -24,9 +24,8 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./schemora_dev.db"
 
-    # ChromaDB Vector Database
-    CHROMA_PERSIST_DIRECTORY: str = "./chroma_db"
-    CHROMA_COLLECTION_NAME: str = "schemora_knowledge_chunks"
+    # PostgreSQL pgvector Vector Database
+    PGVECTOR_EMBEDDING_DIM: int = 768
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
@@ -38,13 +37,16 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8000",
         "http://127.0.0.1:8080",
         "http://127.0.0.1:5000",
+        "http://10.59.33.142:3000",
+        "http://10.59.33.142:8000",
+        "http://10.59.33.142:8080",
+        "http://10.59.33.142:5000",
         "*",
     ]
 
-    # External APIs
-    GEMINI_API_KEY: str = ""
-    GEMINI_GENERATION_MODEL: str = "gemini-2.5-flash"
-    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
+    # External APIs — Groq AI
+    GROQ_API_KEY: str = ""
+    GROQ_GENERATION_MODEL: str = "llama-3.3-70b-versatile"
 
     FIREBASE_PROJECT_ID: str = ""
     FIREBASE_CLIENT_EMAIL: str = ""

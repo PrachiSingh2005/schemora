@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:schemora_frontend/core/config/env_config.dart';
 import 'package:schemora_frontend/core/providers/app_language_provider.dart';
 import 'package:schemora_frontend/core/theme/app_theme.dart';
 import 'package:schemora_frontend/core/utils/url_launcher_helper.dart';
@@ -282,14 +283,31 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
 
   Future<void> _toggleVoiceListening() async {
     final voiceService = ref.read(voiceAssistantServiceProvider);
+    final repo = ref.read(aiRepositoryProvider);
+
     if (_isListening) {
-      await voiceService.stopListening();
-      setState(() => _isListening = false);
+      debugPrint('[VOICE] User tapped Done/Stop listening');
+      await voiceService.stopListening(
+        onResult: (text, isFinal) {
+          if (mounted && text.isNotEmpty) {
+            setState(() {
+              _controller.text = text;
+              _controller.selection = TextSelection.fromPosition(
+                TextPosition(offset: _controller.text.length),
+              );
+            });
+          }
+        },
+        transcribeApi: (bytes, filename) => repo.transcribeAudio(bytes, filename, language: _selectedLang),
+        languageCode: _selectedLang,
+      );
+      if (mounted) setState(() => _isListening = false);
     } else {
       setState(() => _isListening = true);
 
       await voiceService.startListening(
-        languageCode: _selectedLang, // STT uses the active language
+        languageCode: _selectedLang,
+        transcribeApi: (bytes, filename) => repo.transcribeAudio(bytes, filename, language: _selectedLang),
         onResult: (text, isFinal) {
           if (mounted) {
             setState(() {
@@ -298,7 +316,6 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
                 TextPosition(offset: _controller.text.length),
               );
             });
-            // Auto-detect language from spoken text when recognized
             if (isFinal && text.isNotEmpty) {
               final detected = _detectLanguageFromText(text);
               if (detected != _selectedLang) {
@@ -307,8 +324,36 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
             }
           }
         },
+        onError: (errMsg) {
+          if (mounted) {
+            setState(() => _isListening = false);
+            final recognizedText = _controller.text.trim();
+            if (recognizedText.isNotEmpty && !_isLoading) {
+              debugPrint('[VOICE] Speech timeout occurred but text was recognized: "$recognizedText" -> Submitting query');
+              _sendMessage(wasAskedViaVoice: true);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errMsg),
+                  backgroundColor: AppTheme.primaryBlue,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          }
+        },
         onDone: () {
-          if (mounted) setState(() => _isListening = false);
+          if (mounted) {
+            setState(() => _isListening = false);
+            final recognizedText = _controller.text.trim();
+            if (recognizedText.isNotEmpty && !_isLoading) {
+              debugPrint('[VOICE] Recognized text captured: "$recognizedText"');
+              debugPrint('[VOICE] Sending query to chatbot pipeline');
+              _sendMessage(wasAskedViaVoice: true);
+            } else if (recognizedText.isEmpty) {
+              debugPrint('[VOICE] No speech captured or speech recognizer returned empty');
+            }
+          }
         },
       );
     }
@@ -321,19 +366,23 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
       setState(() => _currentlySpeakingId = null);
     } else {
       setState(() => _currentlySpeakingId = msg.id);
-      // TTS uses the language that was active when the message was received
       await voiceService.speak(msg.text, languageCode: msg.language ?? _selectedLang);
       if (mounted) setState(() => _currentlySpeakingId = null);
     }
   }
 
-  Future<void> _sendMessage() async {
-    if (_isListening) await _toggleVoiceListening();
-
+  Future<void> _sendMessage({bool wasAskedViaVoice = false}) async {
     final text = _controller.text.trim();
     if (text.isEmpty || _isLoading) return;
 
-    // Final language detection before sending
+    debugPrint('===========================================================');
+    debugPrint('[CHAT API]');
+    debugPrint('Base URL = ${EnvConfig.baseUrl}');
+    debugPrint('Request URL = ${EnvConfig.baseUrl}ai/chat');
+    debugPrint('Port = ${EnvConfig.devPort}');
+    debugPrint('===========================================================');
+    debugPrint('[CHAT] Query received: "$text"');
+
     final detectedLang = _detectLanguageFromText(text);
     if (detectedLang != 'en' && detectedLang != _selectedLang) {
       setState(() => _selectedLang = detectedLang);
@@ -360,12 +409,14 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
       final respData = await repo.askAssistant(
         text,
         schemeId: widget.schemeId,
-        language: langToUse, // Always send the active language
+        language: langToUse,
       );
+
+      debugPrint('[CHAT] Response generated successfully');
 
       final citationsData = (respData['citations'] as List<dynamic>?)
               ?.map((c) => SourceCitationModel.fromJson(c as Map<String, dynamic>))
-              .where((c) => c.url.isNotEmpty) // Filter out citations with empty URLs
+              .where((c) => c.url.isNotEmpty)
               .toList() ??
           [];
 
@@ -375,22 +426,34 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
         isUser: false,
         timestamp: DateTime.now(),
         citations: citationsData,
-        language: langToUse, // Store the language so TTS knows which voice to use
+        language: langToUse,
+        isWebSearch: respData['web_search_used'] == true,
       );
 
       if (mounted) {
         setState(() => _messages.add(botMsg));
         _scrollToBottom();
-        // Auto-speak bot response if user asked via voice
-        if (_isListening == false && botMsg.text.length < 500) {
-          // Don't auto-speak very long responses to avoid poor UX
+        if (wasAskedViaVoice && botMsg.text.isNotEmpty) {
+          debugPrint('[TTS] Request sent to vocalize bot response');
+          _toggleSpeakMessage(botMsg);
         }
       }
     } catch (e) {
       if (mounted) {
-        final errText = e.toString().contains('connection timeout') || e.toString().contains('receive timeout')
-            ? 'Connection timed out. Please check server status and try again.'
-            : 'Error connecting to AI service: $e';
+        final errString = e.toString();
+        debugPrint('[API ERROR] Chat request error: $errString');
+        final String errText;
+        if (errString.toLowerCase().contains('connection timeout') || errString.toLowerCase().contains('connecttimeout')) {
+          errText = 'Connection timeout: Backend at http://10.0.2.2:8000 is not reachable.';
+        } else if (errString.toLowerCase().contains('receivetimeout')) {
+          errText = 'Receive timeout: Server took too long to respond (>30s).';
+        } else if (errString.contains('404')) {
+          errText = 'HTTP 404: Endpoint not found.';
+        } else if (errString.contains('500')) {
+          errText = 'HTTP 500: Backend internal error.';
+        } else {
+          errText = 'Connection Error: $e';
+        }
         setState(() {
           _messages.add(ChatMessageModel(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -577,6 +640,30 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
                 ],
               ],
             ),
+
+            if (!msg.isUser && msg.isWebSearch) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.teal.shade200),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.language_rounded, size: 12, color: Colors.teal.shade700),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Retrieved via Official Web Search Fallback',
+                      style: TextStyle(fontSize: 10, color: Colors.teal.shade800, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
 
             // Interactive Support Cross-Questions (Tap to Ask)
             if (!msg.isUser && _parseSupportQueries(msg.text).$2.isNotEmpty) ...[

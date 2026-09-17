@@ -7,7 +7,7 @@ import 'package:schemora_frontend/features/profile/domain/profile_type_provider.
 import 'package:schemora_frontend/features/schemes/domain/scheme_model.dart';
 
 abstract class SchemeRepository {
-  Future<List<SchemeModel>> getSchemes({String? query, String? jurisdiction, String? state, String? category});
+  Future<List<SchemeModel>> getSchemes({String? query, String? jurisdiction, String? state, String? category, bool forceRefresh = false});
   Future<SchemeModel> getSchemeDetails(String schemeId);
   Future<List<RecommendationItemModel>> getTop3Recommendations(String token, {String? category});
 }
@@ -419,13 +419,18 @@ class SchemeRepositoryImpl implements SchemeRepository {
     String? jurisdiction,
     String? state,
     String? category,
+    bool forceRefresh = false,
   }) async {
+    if (forceRefresh || (_cachedAllSchemes != null && _cachedAllSchemes!.length < 20)) {
+      _cachedAllSchemes = null;
+    }
+
     List<SchemeModel> allSchemes;
     if (_cachedAllSchemes != null && _cachedAllSchemes!.isNotEmpty) {
       allSchemes = List<SchemeModel>.from(_cachedAllSchemes!);
     } else {
       try {
-        final response = await _dio.get('/schemes', queryParameters: {'page_size': 200});
+        final response = await _dio.get('/schemes', queryParameters: {'page_size': 500});
         final data = response.data['data'] as List<dynamic>;
         allSchemes = data.map((e) => SchemeModel.fromJson(e as Map<String, dynamic>)).toList();
         if (allSchemes.isNotEmpty) {
@@ -630,7 +635,6 @@ class SchemeRepositoryImpl implements SchemeRepository {
           ),
         ]);
         allSchemes = list;
-        _cachedAllSchemes = list;
       }
     }
 
@@ -648,7 +652,8 @@ class SchemeRepositoryImpl implements SchemeRepository {
         final t = s.title.toLowerCase();
         final d = s.shortDescription.toLowerCase();
         final b = s.benefitSummary.toLowerCase();
-        return t.contains(cat) || d.contains(cat) || b.contains(cat);
+        final bt = s.benefitType.toLowerCase();
+        return t.contains(cat) || d.contains(cat) || b.contains(cat) || bt.contains(cat);
       }).toList();
     }
     if (query != null && query.isNotEmpty) {
@@ -656,8 +661,20 @@ class SchemeRepositoryImpl implements SchemeRepository {
       list = list.where((s) {
         final t = s.title.toLowerCase();
         final d = s.shortDescription.toLowerCase();
+        final dd = (s.detailedDescription ?? '').toLowerCase();
         final p = s.provider.toLowerCase();
-        return t.contains(q) || d.contains(q) || p.contains(q);
+        final b = s.benefitSummary.toLowerCase();
+        final bt = s.benefitType.toLowerCase();
+        final st = (s.state ?? '').toLowerCase();
+        final ben = (s.beneficiaries ?? '').toLowerCase();
+        return t.contains(q) ||
+            d.contains(q) ||
+            dd.contains(q) ||
+            p.contains(q) ||
+            b.contains(q) ||
+            bt.contains(q) ||
+            st.contains(q) ||
+            ben.contains(q);
       }).toList();
     }
     return list;
@@ -703,30 +720,41 @@ class SchemeRepositoryImpl implements SchemeRepository {
   Future<List<RecommendationItemModel>> getRecommendations(String token, {String? category}) async {
     try {
       final response = await _dio.post(
+        '/ai/recommendations',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final rawData = response.data['data'];
+      final List<dynamic> recList = rawData['recommendations'] ?? rawData['all_evaluations'] ?? rawData['top3_recommendations'] ?? [];
+      final results = recList.map((e) => RecommendationItemModel.fromJson(e as Map<String, dynamic>)).toList();
+      if (results.isNotEmpty) return results;
+
+      // Fallback endpoint check
+      final fallbackResponse = await _dio.post(
         '/schemes/recommendations',
         queryParameters: {
           if (category != null && category.isNotEmpty) 'category': category,
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      final rawData = response.data['data'];
-      final List<dynamic> data = rawData['all_evaluations'] ?? rawData['top3_recommendations'] ?? [];
-      final results = data.map((e) => RecommendationItemModel.fromJson(e as Map<String, dynamic>)).toList();
-      return results.isNotEmpty ? results : _getFallbackRecommendationsForCategory(category);
+      final rawData2 = fallbackResponse.data['data'];
+      final List<dynamic> recList2 = rawData2['recommendations'] ?? rawData2['all_evaluations'] ?? rawData2['top3_recommendations'] ?? [];
+      final results2 = recList2.map((e) => RecommendationItemModel.fromJson(e as Map<String, dynamic>)).toList();
+      return results2.isNotEmpty ? results2 : _getFallbackRecommendationsForCategory(category);
     } catch (_) {
       return _getFallbackRecommendationsForCategory(category);
     }
   }
 }
 
+
 final schemeRepositoryProvider = Provider<SchemeRepository>((ref) {
   final dio = ref.watch(dioProvider);
   return SchemeRepositoryImpl(dio);
 });
 
-final allSchemesProvider = FutureProvider<List<SchemeModel>>((ref) async {
+final allSchemesProvider = FutureProvider.autoDispose<List<SchemeModel>>((ref) async {
   final repo = ref.watch(schemeRepositoryProvider);
-  return repo.getSchemes();
+  return repo.getSchemes(forceRefresh: true);
 });
 
 final top3RecommendationsProvider = FutureProvider<List<RecommendationItemModel>>((ref) async {

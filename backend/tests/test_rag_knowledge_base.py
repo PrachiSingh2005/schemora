@@ -516,7 +516,7 @@ class TestCitationGeneration:
     """Tests for citation building in gemini_service.py."""
 
     def test_citations_deduplicated_by_url(self):
-        from app.services.gemini_service import _build_citations
+        from app.services.groq_service import _build_citations
         chunks = [
             {"source_url": "https://pmkisan.gov.in", "source_title": "PM-KISAN Overview", "last_verified_at": "2026-08-01"},
             {"source_url": "https://pmkisan.gov.in", "source_title": "PM-KISAN Benefits", "last_verified_at": "2026-08-01"},
@@ -529,7 +529,7 @@ class TestCitationGeneration:
         assert "https://myscheme.gov.in" in urls
 
     def test_citations_have_all_required_fields(self):
-        from app.services.gemini_service import _build_citations
+        from app.services.groq_service import _build_citations
         chunks = [
             {"source_url": "https://pmkisan.gov.in", "source_title": "PM-KISAN", "last_verified_at": "2026-08-01"},
         ]
@@ -541,7 +541,7 @@ class TestCitationGeneration:
         assert "last_verified_at" in c
 
     def test_empty_chunks_produces_no_citations(self):
-        from app.services.gemini_service import _build_citations
+        from app.services.groq_service import _build_citations
         assert _build_citations([]) == []
 
 
@@ -586,7 +586,7 @@ class TestEdgeCases:
 
     @pytest.mark.asyncio
     async def test_out_of_scope_query_returns_refusal(self):
-        from app.services.gemini_service import generate_grounded_chat_response
+        from app.services.groq_service import generate_grounded_chat_response
         answer, citations, is_grounded = await generate_grounded_chat_response(
             query="Who won the cricket match yesterday?",
             chunks=[],
@@ -598,7 +598,7 @@ class TestEdgeCases:
 
     @pytest.mark.asyncio
     async def test_empty_chunks_returns_not_found_message(self):
-        from app.services.gemini_service import generate_grounded_chat_response
+        from app.services.groq_service import generate_grounded_chat_response
         answer, citations, is_grounded = await generate_grounded_chat_response(
             query="What is the scholarship amount for OBC students?",
             chunks=[],
@@ -758,7 +758,7 @@ class TestAntiHallucination:
     @pytest.mark.asyncio
     async def test_fallback_answer_only_contains_retrieved_content(self):
         """When Gemini is unavailable, fallback answer uses only chunk content."""
-        from app.services.gemini_service import _build_fallback_response
+        from app.services.groq_service import _build_fallback_response
         chunks = [
             {
                 "scheme_name": "PM-KISAN",
@@ -776,7 +776,7 @@ class TestAntiHallucination:
     @pytest.mark.asyncio
     async def test_out_of_scope_never_returns_scheme_info(self):
         """Out-of-scope queries should return refusal, never scheme data."""
-        from app.services.gemini_service import generate_grounded_chat_response
+        from app.services.groq_service import generate_grounded_chat_response
         fake_chunks = [
             {
                 "scheme_name": "PM-KISAN",
@@ -796,7 +796,7 @@ class TestAntiHallucination:
 
     def test_prompt_contains_safety_instructions(self):
         """Safety prompt must include anti-hallucination instructions."""
-        from app.services.gemini_service import _build_rag_prompt
+        from app.services.groq_service import _build_rag_prompt
         chunks = [
             {
                 "scheme_name": "PM-KISAN",

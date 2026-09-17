@@ -164,7 +164,6 @@ async def admin_unpublish_knowledge(
     db: AsyncSession = Depends(get_db),
 ):
     """Remove all knowledge chunks for a scheme from RAG retrieval (soft delete)."""
-    # Find and delete all chunks for this scheme
     chunks_result = await db.execute(
         select(KnowledgeChunk).where(KnowledgeChunk.scheme_id == req.scheme_id)
     )
@@ -174,7 +173,6 @@ async def admin_unpublish_knowledge(
     for chunk in chunks:
         await db.delete(chunk)
 
-    # Mark documents as deleted
     docs_result = await db.execute(
         select(KnowledgeDocument).where(KnowledgeDocument.scheme_id == req.scheme_id)
     )
@@ -190,34 +188,34 @@ async def admin_unpublish_knowledge(
     )
 
 
-# ─── Gemini Knowledge Base Expansion ─────────────────────────────────
+# ─── Groq Knowledge Base Expansion ───────────────────────────────────
 
 from pydantic import BaseModel, Field
 from app.core.config import settings
-from app.services.gemini_schemes_generator import generate_schemes_with_gemini
+from app.services.groq_schemes_generator import generate_schemes_with_groq
 from app.services.seeder import seed_scheme_dataset
 from pathlib import Path
 import json
 
 
 class AdminGenerateSchemesRequest(BaseModel):
-    gemini_api_key: Optional[str] = Field(default=None, description="Optional Gemini API key (defaults to server config)")
+    groq_api_key: Optional[str] = Field(default=None, description="Optional Groq API key (defaults to server config)")
     categories: List[str] = Field(default=["Agriculture", "Scholarship", "Health"], description="Categories to generate")
     count_per_category: int = Field(default=2, ge=1, le=5)
 
 
-@router.post("/schemes/generate-gemini", response_model=APIResponse[dict], summary="[Admin] Generate & Index Schemes using Gemini AI")
+@router.post("/schemes/generate-groq", response_model=APIResponse[dict], summary="[Admin] Generate & Index Schemes using Groq AI")
 async def admin_generate_schemes(
     req: AdminGenerateSchemesRequest,
     admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Use Gemini AI to generate structured government schemes and seed them into DB and RAG index."""
-    api_key = req.gemini_api_key or settings.GEMINI_API_KEY
+    """Use Groq AI to generate structured government schemes and seed them into DB and RAG index."""
+    api_key = req.groq_api_key or settings.GROQ_API_KEY
     if not api_key:
         raise HTTPException(
             status_code=400,
-            detail="Gemini API key is required. Provide 'gemini_api_key' in request or set GEMINI_API_KEY in server environment.",
+            detail="Groq API key is required. Provide 'groq_api_key' in request or set GROQ_API_KEY in server environment.",
         )
 
     json_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "schemes" / "schemes.v1.json"
@@ -232,7 +230,7 @@ async def admin_generate_schemes(
 
     for cat in req.categories:
         try:
-            generated = await generate_schemes_with_gemini(api_key=api_key, category=cat, count=req.count_per_category)
+            generated = await generate_schemes_with_groq(api_key=api_key, category=cat, count=req.count_per_category)
             for s in generated:
                 s_id = s.get("scheme_id")
                 if s_id and s_id not in existing_ids:
@@ -240,7 +238,7 @@ async def admin_generate_schemes(
                     existing_ids.add(s_id)
                     new_schemes.append(s)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Gemini scheme generation failed for category '{cat}': {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Groq scheme generation failed for category '{cat}': {str(e)}")
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(dataset_data, f, indent=2, ensure_ascii=False)
@@ -262,11 +260,7 @@ async def admin_reindex_all(
     admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Re-index the full Phase 0 scheme dataset into the RAG knowledge base.
-
-    This is idempotent — existing chunks for each scheme are replaced.
-    Generates semantic embeddings using Gemini text-embedding-004.
-    """
+    """Re-index the full Phase 0 scheme dataset into the RAG knowledge base."""
     if not DATASET_PATH.exists():
         raise HTTPException(
             status_code=404,
@@ -282,3 +276,51 @@ async def admin_reindex_all(
         ),
         data=result,
     )
+
+
+# ─── Web Scraper Control ──────────────────────────────────────────────────────
+
+
+class AdminScraperRunRequest(BaseModel):
+    target_urls: Optional[List[str]] = Field(
+        default=None,
+        description="Optional list of portal URLs to scrape. Defaults to configured official government portal URLs.",
+    )
+    save_raw_to_disk: bool = Field(
+        default=True,
+        description="Whether to record raw scraped JSON payload in data/raw/",
+    )
+
+
+@router.post("/scraper/run", response_model=APIResponse[dict], summary="[Admin] Trigger Web Scraper Ingestion into RAG Knowledge Base")
+async def admin_run_scraper(
+    req: AdminScraperRunRequest,
+    admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Trigger the web scraper pipeline.
+
+    Scrapes targeted official government portals, normalizes scheme fields,
+    chunks content into standard 7 semantic sections, and indexes chunks directly
+    into PostgreSQL pgvector and Schemora Knowledge Base.
+    """
+    from app.services.scraper import run_web_scraping_ingestion
+
+    try:
+        metrics = await run_web_scraping_ingestion(
+            db=db,
+            target_urls=req.target_urls,
+            save_raw_to_disk=req.save_raw_to_disk,
+        )
+        return APIResponse(
+            success=True,
+            message=(
+                f"Web scraping complete: Extracted {metrics['raw_records_count']} records from "
+                f"{metrics['scraped_urls_count']} portal URLs and indexed {metrics['indexed_schemes_count']} "
+                f"schemes ({metrics['total_chunks_created']} chunks) into Knowledge Base & RAG."
+            ),
+            data=metrics,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Web scraper ingestion failed: {str(e)}")
+

@@ -22,9 +22,9 @@ class EnvConfig {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// LAN IP of the dev machine — injected at build time by run_dev.ps1.
-  /// Falls back to empty string (→ localhost) if not provided.
+  /// Defaults to 10.59.33.142.
   static const String devHostIp =
-      String.fromEnvironment('DEV_HOST_IP', defaultValue: '192.168.3.174');
+      String.fromEnvironment('DEV_HOST_IP', defaultValue: '10.59.33.142');
 
   // Set to 'true' only when running on Android Emulator
   static const bool _useEmulator =
@@ -36,8 +36,7 @@ class EnvConfig {
 
   /// Deterministic API base URL:
   /// - Production:      --dart-define=API_BASE_URL=https://...
-  /// - Android Emulator: .\run_dev.ps1 -Emulator  →  http://10.0.2.2:8000/api/v1/
-  /// - Physical Phone:   .\run_dev.ps1            →  http://<auto-detected-ip>:8000/api/v1/
+  /// - Android Emulator: http://10.0.2.2:8000/api/v1/
   /// - Web / Desktop:    http://127.0.0.1:8000/api/v1/
   static String get baseUrl {
     if (_overrideBaseUrl.isNotEmpty) {
@@ -46,28 +45,18 @@ class EnvConfig {
     }
 
     String host;
-    if (kIsWeb) {
-      host = '127.0.0.1';
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      // 10.0.2.2 maps directly to host PC localhost on Android Emulator (<1ms)
+      host = '10.0.2.2';
     } else {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-          if (_useEmulator) {
-            host = '10.0.2.2';
-          } else {
-            host = devHostIp.isNotEmpty ? devHostIp : '192.168.3.174';
-          }
-          break;
-        default:
-          host = '127.0.0.1';
-          break;
-      }
+      host = '127.0.0.1';
     }
 
     return 'http://$host:$devPort/api/v1/';
   }
 
-  // Timeout settings (10s connect, 60s receive for AI responses, 30s send)
-  static const int connectTimeoutMs = 10000;
-  static const int receiveTimeoutMs = 60000;
-  static const int sendTimeoutMs = 30000;
+  // Fast, crisp timeout settings (5s connect, 30s receive, 15s send)
+  static const int connectTimeoutMs = 5000;
+  static const int receiveTimeoutMs = 30000;
+  static const int sendTimeoutMs = 15000;
 }

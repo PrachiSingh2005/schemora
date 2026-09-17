@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from app.services.gemini_service import generate_grounded_chat_response
+from app.services.groq_service import generate_grounded_chat_response
 from app.services.retrieval_service import detect_intent
 
 sys.stdout.reconfigure(encoding='utf-8')

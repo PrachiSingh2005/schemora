@@ -1,6 +1,6 @@
 import pytest
 from app.services.rag_service import chunk_text, compute_tfidf_vector, cosine_similarity
-from app.services.gemini_service import is_out_of_scope, generate_grounded_explanation, generate_grounded_chat_response
+from app.services.groq_service import is_out_of_scope, generate_grounded_explanation, generate_grounded_chat_response
 from app.schemas.ai import AIExplanationRequest, AIExplanationResponse, AIChatRequest, AIChatResponse, SourceCitation
 
 

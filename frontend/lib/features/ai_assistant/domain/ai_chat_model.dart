@@ -27,6 +27,7 @@ class ChatMessageModel {
   /// Language code (e.g. 'en', 'hi', 'mr') in which this message was written/received.
   /// Used to select the correct TTS voice when reading aloud.
   final String? language;
+  final bool isWebSearch;
 
   ChatMessageModel({
     required this.id,
@@ -35,5 +36,7 @@ class ChatMessageModel {
     required this.timestamp,
     this.citations = const [],
     this.language,
+    this.isWebSearch = false,
   });
 }
+

@@ -1,4 +1,5 @@
 from typing import AsyncGenerator
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
@@ -13,13 +14,24 @@ elif db_url.startswith("sqlite://") and not db_url.startswith("sqlite+aiosqlite:
 connect_args = {}
 if "sqlite" in db_url:
     connect_args["check_same_thread"] = False
+    connect_args["timeout"] = 30.0
 
 engine = create_async_engine(
     db_url,
-    echo=settings.DEBUG,
+    echo=False,  # Disable query dumping for speed
     future=True,
+    pool_pre_ping=True,
     connect_args=connect_args,
 )
+
+if "sqlite" in db_url:
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
@@ -44,5 +56,4 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
+

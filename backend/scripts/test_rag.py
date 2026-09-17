@@ -215,16 +215,16 @@ async def run_tests():
     return results, pass_count, fail_count
 
 
-async def test_gemini_generation():
-    """Test full Gemini generation with a sample RAG context."""
+async def test_groq_generation():
+    """Test full Groq generation with a sample RAG context."""
     print(f"\n{'='*70}")
-    print("GEMINI GENERATION TEST")
+    print("GROQ GENERATION TEST")
     print(f"{'='*70}\n")
 
-    from app.services.gemini_service import generate_grounded_chat_response
+    from app.services.groq_service import generate_grounded_chat_response
     from app.core.config import settings
 
-    api_key = settings.GEMINI_API_KEY
+    api_key = settings.GROQ_API_KEY
     print(f"API Key present: {bool(api_key and len(api_key) > 10)}")
     print(f"Key prefix: {api_key[:10]}..." if api_key else "NO KEY")
 
@@ -289,11 +289,11 @@ async def main():
         import traceback
         traceback.print_exc()
     
-    # Test Gemini
+    # Test Groq
     try:
-        await test_gemini_generation()
+        await test_groq_generation()
     except Exception as e:
-        print(f"GEMINI TEST ERROR: {e}")
+        print(f"GROQ TEST ERROR: {e}")
         import traceback
         traceback.print_exc()
 

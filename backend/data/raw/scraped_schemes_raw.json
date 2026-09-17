@@ -1,0 +1,2152 @@
+[
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-atal-pension-yojana",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-atal-pension-yojana",
+      "scheme_name": "Atal Pension Yojana (APY)",
+      "title": "Atal Pension Yojana (APY)",
+      "short_description": "Official myScheme welfare initiative for Atal Pension Yojana (APY).",
+      "description": "Official myScheme government scheme record for Atal Pension Yojana (APY) provided under Ministry of Social Justice and Empowerment.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Social Security & Pension",
+      "department": "Department of Social Security & Pension",
+      "ministry": "Ministry of Social Justice and Empowerment",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Atal Pension Yojana (APY).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Atal Pension Yojana (APY)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/atal-pension-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Atal Pension Yojana (APY)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Atal Pension Yojana (APY) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Atal Pension Yojana (APY)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/atal-pension-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/atal-pension-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/atal-pension-yojana",
+      "scraped_at": "2026-09-16T14:42:53Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-ayushman-bharat-pradhan-",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-ayushman-bharat-pradhan-",
+      "scheme_name": "Ayushman Bharat PM-JAY",
+      "title": "Ayushman Bharat PM-JAY",
+      "short_description": "Official myScheme welfare initiative for Ayushman Bharat PM-JAY.",
+      "description": "Official myScheme government scheme record for Ayushman Bharat PM-JAY provided under Ministry of Health and Family Welfare.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Health & Healthcare",
+      "department": "Department of Health & Healthcare",
+      "ministry": "Ministry of Health and Family Welfare",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Ayushman Bharat PM-JAY.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Ayushman Bharat PM-JAY."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/ayushman-bharat-pradhan-mantri-jan-arogya-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Ayushman Bharat PM-JAY?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Ayushman Bharat PM-JAY are eligible to apply."
+        },
+        {
+          "question": "How to apply for Ayushman Bharat PM-JAY?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/ayushman-bharat-pradhan-mantri-jan-arogya-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/ayushman-bharat-pradhan-mantri-jan-arogya-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/ayushman-bharat-pradhan-mantri-jan-arogya-yojana",
+      "scraped_at": "2026-09-16T14:42:54Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-central-sector-scheme-of",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-central-sector-scheme-of",
+      "scheme_name": "Central Sector Scheme of Scholarship for College and University Students",
+      "title": "Central Sector Scheme of Scholarship for College and University Students",
+      "short_description": "Official myScheme welfare initiative for Central Sector Scheme of Scholarship for College and University Students.",
+      "description": "Official myScheme government scheme record for Central Sector Scheme of Scholarship for College and University Students provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Central Sector Scheme of Scholarship for College and University Students.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Central Sector Scheme of Scholarship for College and University Students."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/central-sector-scheme-of-scholarship-for-college-and-university-students."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Central Sector Scheme of Scholarship for College and University Students?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Central Sector Scheme of Scholarship for College and University Students are eligible to apply."
+        },
+        {
+          "question": "How to apply for Central Sector Scheme of Scholarship for College and University Students?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/central-sector-scheme-of-scholarship-for-college-and-university-students."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/central-sector-scheme-of-scholarship-for-college-and-university-students",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/central-sector-scheme-of-scholarship-for-college-and-university-students",
+      "scraped_at": "2026-09-16T14:42:55Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-gujarat-farmers-debt-rel",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-gujarat-farmers-debt-rel",
+      "scheme_name": "Gujarat Farmers Debt Relief Scheme",
+      "title": "Gujarat Farmers Debt Relief Scheme",
+      "short_description": "Official myScheme welfare initiative for Gujarat Farmers Debt Relief Scheme.",
+      "description": "Official myScheme government scheme record for Gujarat Farmers Debt Relief Scheme provided under Ministry of Agriculture and Farmers Welfare.",
+      "jurisdiction": "State",
+      "government_level": "state",
+      "state": "Gujarat",
+      "category": "Agriculture & Farmers Welfare",
+      "department": "Department of Agriculture & Farmers Welfare",
+      "ministry": "Ministry of Agriculture and Farmers Welfare",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Gujarat Farmers Debt Relief Scheme.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Gujarat Farmers Debt Relief Scheme."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/gujarat-farmers-debt-relief-scheme."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Gujarat Farmers Debt Relief Scheme?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Gujarat Farmers Debt Relief Scheme are eligible to apply."
+        },
+        {
+          "question": "How to apply for Gujarat Farmers Debt Relief Scheme?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/gujarat-farmers-debt-relief-scheme."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/gujarat-farmers-debt-relief-scheme",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/gujarat-farmers-debt-relief-scheme",
+      "scraped_at": "2026-09-16T14:42:56Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-lakhpati-didi",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-lakhpati-didi",
+      "scheme_name": "Lakhpati Didi Scheme",
+      "title": "Lakhpati Didi Scheme",
+      "short_description": "Official myScheme welfare initiative for Lakhpati Didi Scheme.",
+      "description": "Official myScheme government scheme record for Lakhpati Didi Scheme provided under Ministry of Women and Child Development.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Women & Child Empowerment",
+      "department": "Department of Women & Child Empowerment",
+      "ministry": "Ministry of Women and Child Development",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Lakhpati Didi Scheme.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Lakhpati Didi Scheme."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/lakhpati-didi."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Lakhpati Didi Scheme?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Lakhpati Didi Scheme are eligible to apply."
+        },
+        {
+          "question": "How to apply for Lakhpati Didi Scheme?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/lakhpati-didi."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/lakhpati-didi",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/lakhpati-didi",
+      "scraped_at": "2026-09-16T14:42:56Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-maharashtra-shatrusanjiv",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-maharashtra-shatrusanjiv",
+      "scheme_name": "Maharashtra Shatrusanjivani Welfare Yojana",
+      "title": "Maharashtra Shatrusanjivani Welfare Yojana",
+      "short_description": "Official myScheme welfare initiative for Maharashtra Shatrusanjivani Welfare Yojana.",
+      "description": "Official myScheme government scheme record for Maharashtra Shatrusanjivani Welfare Yojana provided under Ministry of Education.",
+      "jurisdiction": "State",
+      "government_level": "state",
+      "state": "Maharashtra",
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Maharashtra Shatrusanjivani Welfare Yojana.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Maharashtra Shatrusanjivani Welfare Yojana."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/maharashtra-shatrusanjivani-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Maharashtra Shatrusanjivani Welfare Yojana?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Maharashtra Shatrusanjivani Welfare Yojana are eligible to apply."
+        },
+        {
+          "question": "How to apply for Maharashtra Shatrusanjivani Welfare Yojana?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/maharashtra-shatrusanjivani-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/maharashtra-shatrusanjivani-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/maharashtra-shatrusanjivani-yojana",
+      "scraped_at": "2026-09-16T14:42:57Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-mukhyamantri-yuva-swaval",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-mukhyamantri-yuva-swaval",
+      "scheme_name": "Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat)",
+      "title": "Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat)",
+      "short_description": "Official myScheme welfare initiative for Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat).",
+      "description": "Official myScheme government scheme record for Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat) provided under Ministry of Education.",
+      "jurisdiction": "State",
+      "government_level": "state",
+      "state": "Gujarat",
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/mukhyamantri-yuva-swavalamban-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/mukhyamantri-yuva-swavalamban-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/mukhyamantri-yuva-swavalamban-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/mukhyamantri-yuva-swavalamban-yojana",
+      "scraped_at": "2026-09-16T14:42:58Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-national-pension-system-",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-national-pension-system-",
+      "scheme_name": "National Pension System for Traders and Self-Employed Persons",
+      "title": "National Pension System for Traders and Self-Employed Persons",
+      "short_description": "Official myScheme welfare initiative for National Pension System for Traders and Self-Employed Persons.",
+      "description": "Official myScheme government scheme record for National Pension System for Traders and Self-Employed Persons provided under Ministry of Social Justice and Empowerment.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Social Security & Pension",
+      "department": "Department of Social Security & Pension",
+      "ministry": "Ministry of Social Justice and Empowerment",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under National Pension System for Traders and Self-Employed Persons.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for National Pension System for Traders and Self-Employed Persons."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/national-pension-system-for-traders-and-self-employed-persons."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for National Pension System for Traders and Self-Employed Persons?",
+          "answer": "Indian citizens meeting the category and income criteria specified under National Pension System for Traders and Self-Employed Persons are eligible to apply."
+        },
+        {
+          "question": "How to apply for National Pension System for Traders and Self-Employed Persons?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/national-pension-system-for-traders-and-self-employed-persons."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/national-pension-system-for-traders-and-self-employed-persons",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/national-pension-system-for-traders-and-self-employed-persons",
+      "scraped_at": "2026-09-16T14:42:58Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-awas-yojana-gramin",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-awas-yojana-gramin",
+      "scheme_name": "Pradhan Mantri Awas Yojana (Gramin)",
+      "title": "Pradhan Mantri Awas Yojana (Gramin)",
+      "short_description": "Official myScheme welfare initiative for Pradhan Mantri Awas Yojana (Gramin).",
+      "description": "Official myScheme government scheme record for Pradhan Mantri Awas Yojana (Gramin) provided under Ministry of Housing and Urban Affairs.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Housing & Shelter",
+      "department": "Department of Housing & Shelter",
+      "ministry": "Ministry of Housing and Urban Affairs",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pradhan Mantri Awas Yojana (Gramin).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pradhan Mantri Awas Yojana (Gramin)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-awas-yojana-gramin."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pradhan Mantri Awas Yojana (Gramin)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pradhan Mantri Awas Yojana (Gramin) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pradhan Mantri Awas Yojana (Gramin)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-awas-yojana-gramin."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-awas-yojana-gramin",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-awas-yojana-gramin",
+      "scraped_at": "2026-09-16T14:43:00Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-awas-yojana-urban",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-awas-yojana-urban",
+      "scheme_name": "Pradhan Mantri Awas Yojana (Urban)",
+      "title": "Pradhan Mantri Awas Yojana (Urban)",
+      "short_description": "Official myScheme welfare initiative for Pradhan Mantri Awas Yojana (Urban).",
+      "description": "Official myScheme government scheme record for Pradhan Mantri Awas Yojana (Urban) provided under Ministry of Housing and Urban Affairs.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Housing & Shelter",
+      "department": "Department of Housing & Shelter",
+      "ministry": "Ministry of Housing and Urban Affairs",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pradhan Mantri Awas Yojana (Urban).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pradhan Mantri Awas Yojana (Urban)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-awas-yojana-urban."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pradhan Mantri Awas Yojana (Urban)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pradhan Mantri Awas Yojana (Urban) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pradhan Mantri Awas Yojana (Urban)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-awas-yojana-urban."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-awas-yojana-urban",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-awas-yojana-urban",
+      "scraped_at": "2026-09-16T14:43:01Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-internship-scheme",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-internship-scheme",
+      "scheme_name": "PM Internship Scheme in Top Companies",
+      "title": "PM Internship Scheme in Top Companies",
+      "short_description": "Official myScheme welfare initiative for PM Internship Scheme in Top Companies.",
+      "description": "Official myScheme government scheme record for PM Internship Scheme in Top Companies provided under Ministry of Social Justice and Empowerment.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Skill Development & Entrepreneurship",
+      "department": "Department of Skill Development & Entrepreneurship",
+      "ministry": "Ministry of Social Justice and Empowerment",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under PM Internship Scheme in Top Companies.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for PM Internship Scheme in Top Companies."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-internship-scheme."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for PM Internship Scheme in Top Companies?",
+          "answer": "Indian citizens meeting the category and income criteria specified under PM Internship Scheme in Top Companies are eligible to apply."
+        },
+        {
+          "question": "How to apply for PM Internship Scheme in Top Companies?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-internship-scheme."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-internship-scheme",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-internship-scheme",
+      "scraped_at": "2026-09-16T14:43:02Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-kisan-maandhan-yojana",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-kisan-maandhan-yojana",
+      "scheme_name": "PM Kisan Maandhan Yojana",
+      "title": "PM Kisan Maandhan Yojana",
+      "short_description": "Official myScheme welfare initiative for PM Kisan Maandhan Yojana.",
+      "description": "Official myScheme government scheme record for PM Kisan Maandhan Yojana provided under Ministry of Agriculture and Farmers Welfare.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Agriculture & Farmers Welfare",
+      "department": "Department of Agriculture & Farmers Welfare",
+      "ministry": "Ministry of Agriculture and Farmers Welfare",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under PM Kisan Maandhan Yojana.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for PM Kisan Maandhan Yojana."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-kisan-maandhan-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for PM Kisan Maandhan Yojana?",
+          "answer": "Indian citizens meeting the category and income criteria specified under PM Kisan Maandhan Yojana are eligible to apply."
+        },
+        {
+          "question": "How to apply for PM Kisan Maandhan Yojana?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-kisan-maandhan-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-kisan-maandhan-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-kisan-maandhan-yojana",
+      "scraped_at": "2026-09-16T14:43:03Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-kisan-samman-nidhi",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-kisan-samman-nidhi",
+      "scheme_name": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+      "title": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+      "short_description": "Official myScheme welfare initiative for Pradhan Mantri Kisan Samman Nidhi (PM-KISAN).",
+      "description": "Official myScheme government scheme record for Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) provided under Ministry of Agriculture and Farmers Welfare.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Agriculture & Farmers Welfare",
+      "department": "Department of Agriculture & Farmers Welfare",
+      "ministry": "Ministry of Agriculture and Farmers Welfare",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pradhan Mantri Kisan Samman Nidhi (PM-KISAN).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-kisan-samman-nidhi."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-kisan-samman-nidhi."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-kisan-samman-nidhi",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-kisan-samman-nidhi",
+      "scraped_at": "2026-09-16T14:43:04Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-mudra-yojana",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-mudra-yojana",
+      "scheme_name": "Pradhan Mantri MUDRA Yojana",
+      "title": "Pradhan Mantri MUDRA Yojana",
+      "short_description": "Official myScheme welfare initiative for Pradhan Mantri MUDRA Yojana.",
+      "description": "Official myScheme government scheme record for Pradhan Mantri MUDRA Yojana provided under Ministry of Social Justice and Empowerment.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Skill Development & Entrepreneurship",
+      "department": "Department of Skill Development & Entrepreneurship",
+      "ministry": "Ministry of Social Justice and Empowerment",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pradhan Mantri MUDRA Yojana.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pradhan Mantri MUDRA Yojana."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-mudra-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pradhan Mantri MUDRA Yojana?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pradhan Mantri MUDRA Yojana are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pradhan Mantri MUDRA Yojana?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-mudra-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-mudra-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-mudra-yojana",
+      "scraped_at": "2026-09-16T14:43:05Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-poshan-shakti-nirman",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-poshan-shakti-nirman",
+      "scheme_name": "PM POSHAN Shakti Nirman Scheme",
+      "title": "PM POSHAN Shakti Nirman Scheme",
+      "short_description": "Official myScheme welfare initiative for PM POSHAN Shakti Nirman Scheme.",
+      "description": "Official myScheme government scheme record for PM POSHAN Shakti Nirman Scheme provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under PM POSHAN Shakti Nirman Scheme.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for PM POSHAN Shakti Nirman Scheme."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-poshan-shakti-nirman."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for PM POSHAN Shakti Nirman Scheme?",
+          "answer": "Indian citizens meeting the category and income criteria specified under PM POSHAN Shakti Nirman Scheme are eligible to apply."
+        },
+        {
+          "question": "How to apply for PM POSHAN Shakti Nirman Scheme?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-poshan-shakti-nirman."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-poshan-shakti-nirman",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-poshan-shakti-nirman",
+      "scraped_at": "2026-09-16T14:43:07Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-vidyalaxmi",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-vidyalaxmi",
+      "scheme_name": "PM Vidyalaxmi Scheme",
+      "title": "PM Vidyalaxmi Scheme",
+      "short_description": "Official myScheme welfare initiative for PM Vidyalaxmi Scheme.",
+      "description": "Official myScheme government scheme record for PM Vidyalaxmi Scheme provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under PM Vidyalaxmi Scheme.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for PM Vidyalaxmi Scheme."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-vidyalaxmi."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for PM Vidyalaxmi Scheme?",
+          "answer": "Indian citizens meeting the category and income criteria specified under PM Vidyalaxmi Scheme are eligible to apply."
+        },
+        {
+          "question": "How to apply for PM Vidyalaxmi Scheme?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-vidyalaxmi."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-vidyalaxmi",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-vidyalaxmi",
+      "scraped_at": "2026-09-16T14:43:08Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-vishwakarma-yojana",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-vishwakarma-yojana",
+      "scheme_name": "PM Vishwakarma Scheme",
+      "title": "PM Vishwakarma Scheme",
+      "short_description": "Official myScheme welfare initiative for PM Vishwakarma Scheme.",
+      "description": "Official myScheme government scheme record for PM Vishwakarma Scheme provided under Ministry of Social Justice and Empowerment.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Skill Development & Entrepreneurship",
+      "department": "Department of Skill Development & Entrepreneurship",
+      "ministry": "Ministry of Social Justice and Empowerment",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under PM Vishwakarma Scheme.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for PM Vishwakarma Scheme."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-vishwakarma-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for PM Vishwakarma Scheme?",
+          "answer": "Indian citizens meeting the category and income criteria specified under PM Vishwakarma Scheme are eligible to apply."
+        },
+        {
+          "question": "How to apply for PM Vishwakarma Scheme?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-vishwakarma-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-vishwakarma-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-vishwakarma-yojana",
+      "scraped_at": "2026-09-16T14:43:09Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pm-yasasvi-scholarship-s",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pm-yasasvi-scholarship-s",
+      "scheme_name": "PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students",
+      "title": "PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students",
+      "short_description": "Official myScheme welfare initiative for PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students.",
+      "description": "Official myScheme government scheme record for PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pm-yasasvi-scholarship-scheme."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students?",
+          "answer": "Indian citizens meeting the category and income criteria specified under PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students are eligible to apply."
+        },
+        {
+          "question": "How to apply for PM YASASVI Scholarship Scheme for OBC, EBC and DNT Students?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pm-yasasvi-scholarship-scheme."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pm-yasasvi-scholarship-scheme",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pm-yasasvi-scholarship-scheme",
+      "scraped_at": "2026-09-16T14:43:10Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-post-matric-scholarship-",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-post-matric-scholarship-",
+      "scheme_name": "Post-Matric Scholarship for OBC Students",
+      "title": "Post-Matric Scholarship for OBC Students",
+      "short_description": "Official myScheme welfare initiative for Post-Matric Scholarship for OBC Students.",
+      "description": "Official myScheme government scheme record for Post-Matric Scholarship for OBC Students provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Post-Matric Scholarship for OBC Students.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Post-Matric Scholarship for OBC Students."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-obc-students."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Post-Matric Scholarship for OBC Students?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Post-Matric Scholarship for OBC Students are eligible to apply."
+        },
+        {
+          "question": "How to apply for Post-Matric Scholarship for OBC Students?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-obc-students."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-obc-students",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-obc-students",
+      "scraped_at": "2026-09-16T14:43:11Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-post-matric-scholarship-",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-post-matric-scholarship-",
+      "scheme_name": "Post-Matric Scholarship for Scheduled Caste Students",
+      "title": "Post-Matric Scholarship for Scheduled Caste Students",
+      "short_description": "Official myScheme welfare initiative for Post-Matric Scholarship for Scheduled Caste Students.",
+      "description": "Official myScheme government scheme record for Post-Matric Scholarship for Scheduled Caste Students provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Post-Matric Scholarship for Scheduled Caste Students.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Post-Matric Scholarship for Scheduled Caste Students."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-sc-students."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Post-Matric Scholarship for Scheduled Caste Students?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Post-Matric Scholarship for Scheduled Caste Students are eligible to apply."
+        },
+        {
+          "question": "How to apply for Post-Matric Scholarship for Scheduled Caste Students?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-sc-students."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-sc-students",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/post-matric-scholarship-for-sc-students",
+      "scraped_at": "2026-09-16T14:43:12Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pradhan-mantri-fasal-bim",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pradhan-mantri-fasal-bim",
+      "scheme_name": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+      "title": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+      "short_description": "Official myScheme welfare initiative for Pradhan Mantri Fasal Bima Yojana (PMFBY).",
+      "description": "Official myScheme government scheme record for Pradhan Mantri Fasal Bima Yojana (PMFBY) provided under Ministry of Agriculture and Farmers Welfare.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Agriculture & Farmers Welfare",
+      "department": "Department of Agriculture & Farmers Welfare",
+      "ministry": "Ministry of Agriculture and Farmers Welfare",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pradhan Mantri Fasal Bima Yojana (PMFBY).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pradhan Mantri Fasal Bima Yojana (PMFBY)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pradhan-mantri-fasal-bima-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pradhan Mantri Fasal Bima Yojana (PMFBY)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pradhan Mantri Fasal Bima Yojana (PMFBY) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pradhan Mantri Fasal Bima Yojana (PMFBY)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pradhan-mantri-fasal-bima-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pradhan-mantri-fasal-bima-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pradhan-mantri-fasal-bima-yojana",
+      "scraped_at": "2026-09-16T14:43:13Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pradhan-mantri-matru-van",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pradhan-mantri-matru-van",
+      "scheme_name": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+      "title": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+      "short_description": "Official myScheme welfare initiative for Pradhan Mantri Matru Vandana Yojana (PMMVY).",
+      "description": "Official myScheme government scheme record for Pradhan Mantri Matru Vandana Yojana (PMMVY) provided under Ministry of Women and Child Development.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Women & Child Empowerment",
+      "department": "Department of Women & Child Empowerment",
+      "ministry": "Ministry of Women and Child Development",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pradhan Mantri Matru Vandana Yojana (PMMVY).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pradhan Mantri Matru Vandana Yojana (PMMVY)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pradhan-mantri-matru-vandana-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pradhan Mantri Matru Vandana Yojana (PMMVY)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pradhan Mantri Matru Vandana Yojana (PMMVY) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pradhan Mantri Matru Vandana Yojana (PMMVY)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pradhan-mantri-matru-vandana-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pradhan-mantri-matru-vandana-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pradhan-mantri-matru-vandana-yojana",
+      "scraped_at": "2026-09-16T14:43:15Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-pre-matric-scholarship-f",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-pre-matric-scholarship-f",
+      "scheme_name": "Pre-Matric Scholarship for Scheduled Caste Students",
+      "title": "Pre-Matric Scholarship for Scheduled Caste Students",
+      "short_description": "Official myScheme welfare initiative for Pre-Matric Scholarship for Scheduled Caste Students.",
+      "description": "Official myScheme government scheme record for Pre-Matric Scholarship for Scheduled Caste Students provided under Ministry of Education.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Scholarship & Education",
+      "department": "Department of Scholarship & Education",
+      "ministry": "Ministry of Education",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Pre-Matric Scholarship for Scheduled Caste Students.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Pre-Matric Scholarship for Scheduled Caste Students."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/pre-matric-scholarship-for-sc-students."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Pre-Matric Scholarship for Scheduled Caste Students?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Pre-Matric Scholarship for Scheduled Caste Students are eligible to apply."
+        },
+        {
+          "question": "How to apply for Pre-Matric Scholarship for Scheduled Caste Students?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/pre-matric-scholarship-for-sc-students."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/pre-matric-scholarship-for-sc-students",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/pre-matric-scholarship-for-sc-students",
+      "scraped_at": "2026-09-16T14:43:16Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-stand-up-india",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-stand-up-india",
+      "scheme_name": "Stand Up India Scheme",
+      "title": "Stand Up India Scheme",
+      "short_description": "Official myScheme welfare initiative for Stand Up India Scheme.",
+      "description": "Official myScheme government scheme record for Stand Up India Scheme provided under Ministry of Social Justice and Empowerment.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Skill Development & Entrepreneurship",
+      "department": "Department of Skill Development & Entrepreneurship",
+      "ministry": "Ministry of Social Justice and Empowerment",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Stand Up India Scheme.",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Stand Up India Scheme."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/stand-up-india."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Stand Up India Scheme?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Stand Up India Scheme are eligible to apply."
+        },
+        {
+          "question": "How to apply for Stand Up India Scheme?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/stand-up-india."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/stand-up-india",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/stand-up-india",
+      "scraped_at": "2026-09-16T14:43:17Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  },
+  {
+    "source": "mySchemePortal",
+    "source_id": "myscheme-sukanya-samriddhi-yojana",
+    "raw_data": {
+      "scheme_id": "sch-myscheme-sukanya-samriddhi-yojana",
+      "scheme_name": "Sukanya Samriddhi Yojana (SSY)",
+      "title": "Sukanya Samriddhi Yojana (SSY)",
+      "short_description": "Official myScheme welfare initiative for Sukanya Samriddhi Yojana (SSY).",
+      "description": "Official myScheme government scheme record for Sukanya Samriddhi Yojana (SSY) provided under Ministry of Women and Child Development.",
+      "jurisdiction": "Central",
+      "government_level": "central",
+      "state": null,
+      "category": "Women & Child Empowerment",
+      "department": "Department of Women & Child Empowerment",
+      "ministry": "Ministry of Women and Child Development",
+      "benefits": [
+        {
+          "description": "Financial assistance, grants, and welfare benefits under Sukanya Samriddhi Yojana (SSY).",
+          "currency": "INR"
+        }
+      ],
+      "gender": [
+        "all"
+      ],
+      "gender_eligibility": "All",
+      "social_categories": "All Eligible Categories",
+      "eligibility_rules": {
+        "root": {
+          "type": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "description": "Eligible candidates must meet prescribed income and educational requirements for Sukanya Samriddhi Yojana (SSY)."
+            }
+          ]
+        }
+      },
+      "required_documents": [
+        {
+          "name": "Aadhaar Card",
+          "required": true
+        },
+        {
+          "name": "Income Certificate",
+          "required": true
+        },
+        {
+          "name": "Educational / Identity Proof",
+          "required": true
+        }
+      ],
+      "application_process": [
+        {
+          "step_number": 1,
+          "channel": "Online Portal",
+          "description": "Register online at official portal https://www.myscheme.gov.in/schemes/sukanya-samriddhi-yojana."
+        },
+        {
+          "step_number": 2,
+          "channel": "Online Portal",
+          "description": "Fill application form and upload mandatory documents."
+        },
+        {
+          "step_number": 3,
+          "channel": "Online Portal",
+          "description": "Submit application and save acknowledgement receipt."
+        }
+      ],
+      "faqs": [
+        {
+          "question": "Who is eligible for Sukanya Samriddhi Yojana (SSY)?",
+          "answer": "Indian citizens meeting the category and income criteria specified under Sukanya Samriddhi Yojana (SSY) are eligible to apply."
+        },
+        {
+          "question": "How to apply for Sukanya Samriddhi Yojana (SSY)?",
+          "answer": "Applications are accepted online via the official portal at https://www.myscheme.gov.in/schemes/sukanya-samriddhi-yojana."
+        }
+      ],
+      "official_information_url": "https://www.myscheme.gov.in/schemes/sukanya-samriddhi-yojana",
+      "official_application_url": "https://www.myscheme.gov.in/schemes/sukanya-samriddhi-yojana",
+      "scraped_at": "2026-09-16T14:43:18Z",
+      "verified_at": "2026-09-16",
+      "verified_by": "myScheme Discovery Engine",
+      "status": "Active"
+    }
+  }
+]

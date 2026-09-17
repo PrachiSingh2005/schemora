@@ -1,7 +1,7 @@
 """RAG Service — Schemora (upgraded Phase 1).
 
 This module provides the public RAG API used by ai.py and admin.py.
-It wraps knowledge_base_service + retrieval_service + gemini_service
+It wraps knowledge_base_service + retrieval_service + groq_service
 into clean, callable functions.
 
 Backward compatibility: The original `ingest_document` and

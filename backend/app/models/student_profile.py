@@ -31,6 +31,7 @@ class StudentProfile(Base):
     annual_family_income: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     is_full_time_student: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     employment_status: Mapped[str] = mapped_column(String(64), default="Unemployed", nullable=False)  # Unemployed, PartTime, FullTime, SelfEmployed
+    occupation: Mapped[Optional[str]] = mapped_column(String(64), default="Student", nullable=True)  # Farmer, Student, Senior Citizen, Worker, etc.
     citizenship: Mapped[str] = mapped_column(String(32), default="Indian", nullable=False)
 
     class12_percentile: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
