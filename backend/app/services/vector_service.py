@@ -92,78 +92,30 @@ async def query_similar_chunks_async(
     where_filter = where_filter or {}
     cleaned_filter = {k: v for k, v in where_filter.items() if v is not None and v != ""}
 
-    # ── Path A: Native PostgreSQL pgvector search ────────────────────────────
-    if _is_pgvector_supported(db):
-        try:
-            stmt = select(
-                KnowledgeChunk,
-                KnowledgeChunk.embedding_vec.cosine_distance(query_embedding).label("distance"),
-            ).where(KnowledgeChunk.embedding_vec != None)
+    # Native PostgreSQL pgvector similarity search
+    if not _is_pgvector_supported(db):
+        raise RuntimeError(
+            "PostgreSQL + pgvector is required for Schemora vector search. "
+            "Non-PostgreSQL databases (including SQLite) are strictly disabled."
+        )
 
-            # Apply filters
-            if "scheme_id" in cleaned_filter:
-                stmt = stmt.where(KnowledgeChunk.scheme_id == cleaned_filter["scheme_id"])
-            if "state" in cleaned_filter:
-                stmt = stmt.where(
-                    or_(
-                        KnowledgeChunk.state == cleaned_filter["state"],
-                        KnowledgeChunk.state == None,
-                        KnowledgeChunk.state == "",
-                        KnowledgeChunk.jurisdiction.ilike("%Central%"),
-                    )
-                )
-            if "category" in cleaned_filter:
-                stmt = stmt.where(KnowledgeChunk.category == cleaned_filter["category"])
-            if "section" in cleaned_filter:
-                stmt = stmt.where(KnowledgeChunk.section == cleaned_filter["section"])
+    stmt = select(
+        KnowledgeChunk,
+        KnowledgeChunk.embedding_vec.cosine_distance(query_embedding).label("distance"),
+    ).where(KnowledgeChunk.embedding_vec != None)
 
-            stmt = stmt.order_by("distance").limit(top_k)
-
-            result = await db.execute(stmt)
-            rows = result.all()
-
-            results = []
-            for chunk, dist in rows:
-                distance_val = float(dist) if dist is not None else 1.0
-                similarity = max(0.0, 1.0 - distance_val)
-
-                meta = {
-                    "scheme_id": chunk.scheme_id or "",
-                    "scheme_name": chunk.scheme_name or "",
-                    "section": chunk.section or "",
-                    "jurisdiction": chunk.jurisdiction or "",
-                    "state": chunk.state or "",
-                    "category": chunk.category or "",
-                    "source_id": chunk.source_id or "",
-                    "official_info_url": chunk.official_info_url or "",
-                    "official_app_url": chunk.official_app_url or "",
-                    "last_verified_at": chunk.last_verified_at or "2026-08-07",
-                    "scheme_version": chunk.scheme_version or "v1",
-                }
-
-                results.append({
-                    "id": chunk.id,
-                    "document": chunk.content,
-                    "metadata": meta,
-                    "distance": distance_val,
-                    "similarity_score": round(similarity, 4),
-                })
-
-            return results
-        except Exception as e:
-            logger.warning(f"PostgreSQL pgvector query error, falling back to in-memory scan: {e}")
-
-    # ── Path B: Fallback scan (SQLite / unindexed DBs) ───────────────────────
-    stmt = select(KnowledgeChunk).where(KnowledgeChunk.is_indexed == True)
+    # Apply filters
     if "scheme_id" in cleaned_filter:
         stmt = stmt.where(KnowledgeChunk.scheme_id == cleaned_filter["scheme_id"])
     if "state" in cleaned_filter:
+        st_clean = str(cleaned_filter["state"]).strip()
         stmt = stmt.where(
             or_(
-                KnowledgeChunk.state == cleaned_filter["state"],
+                KnowledgeChunk.state.ilike(st_clean),
                 KnowledgeChunk.state == None,
                 KnowledgeChunk.state == "",
                 KnowledgeChunk.jurisdiction.ilike("%Central%"),
+                KnowledgeChunk.jurisdiction.ilike("%All%"),
             )
         )
     if "category" in cleaned_filter:
@@ -171,43 +123,39 @@ async def query_similar_chunks_async(
     if "section" in cleaned_filter:
         stmt = stmt.where(KnowledgeChunk.section == cleaned_filter["section"])
 
+    stmt = stmt.order_by("distance").limit(top_k)
+
     result = await db.execute(stmt)
-    chunks = result.scalars().all()
+    rows = result.all()
 
     results = []
-    for chunk in chunks:
-        vec = chunk.embedding_vec
-        if isinstance(vec, str):
-            vec = json_to_embedding(vec)
-        elif vec is None:
-            vec = json_to_embedding(chunk.embedding_json)
+    for chunk, dist in rows:
+        distance_val = float(dist) if dist is not None else 1.0
+        similarity = max(0.0, 1.0 - distance_val)
 
-        if is_dense_embedding(vec):
-            score = cosine_similarity_dense(query_embedding, vec)
-            dist = max(0.0, 1.0 - score)
-            meta = {
-                "scheme_id": chunk.scheme_id or "",
-                "scheme_name": chunk.scheme_name or "",
-                "section": chunk.section or "",
-                "jurisdiction": chunk.jurisdiction or "",
-                "state": chunk.state or "",
-                "category": chunk.category or "",
-                "source_id": chunk.source_id or "",
-                "official_info_url": chunk.official_info_url or "",
-                "official_app_url": chunk.official_app_url or "",
-                "last_verified_at": chunk.last_verified_at or "2026-08-07",
-                "scheme_version": chunk.scheme_version or "v1",
-            }
-            results.append({
-                "id": chunk.id,
-                "document": chunk.content,
-                "metadata": meta,
-                "distance": round(dist, 4),
-                "similarity_score": round(score, 4),
-            })
+        meta = {
+            "scheme_id": chunk.scheme_id or "",
+            "scheme_name": chunk.scheme_name or "",
+            "section": chunk.section or "",
+            "jurisdiction": chunk.jurisdiction or "",
+            "state": chunk.state or "",
+            "category": chunk.category or "",
+            "source_id": chunk.source_id or "",
+            "official_info_url": chunk.official_info_url or "",
+            "official_app_url": chunk.official_app_url or "",
+            "last_verified_at": chunk.last_verified_at or "2026-08-07",
+            "scheme_version": chunk.scheme_version or "v1",
+        }
 
-    results.sort(key=lambda x: x["similarity_score"], reverse=True)
-    return results[:top_k]
+        results.append({
+            "id": chunk.id,
+            "document": chunk.content,
+            "metadata": meta,
+            "distance": round(distance_val, 4),
+            "similarity_score": round(similarity, 4),
+        })
+
+    return results
 
 
 async def delete_vectors_by_scheme_id_async(db: AsyncSession, scheme_id: str) -> bool:

@@ -103,7 +103,7 @@ async def generate_schemes_with_groq(
     if not key:
         raise ValueError("Groq API Key is required")
 
-    model = getattr(settings, "GROQ_GENERATION_MODEL", "llama-3.3-70b-versatile")
+    model = getattr(settings, "GROQ_GENERATION_MODEL", "openai/gpt-oss-20b")
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",

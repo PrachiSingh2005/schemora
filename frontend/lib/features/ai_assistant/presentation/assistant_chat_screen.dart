@@ -183,9 +183,13 @@ String _detectLanguageFromText(String text) {
   if (hasOdia) return 'or';
   if (hasArabic) return 'ur';
   if (hasDevanagari) {
-    // Distinguish Hindi vs Marathi vs Nepali — basic heuristic via common words
-    if (RegExp(r'\b(आहे|नाही|कसे|मला|तुम्ही|आम्ही)\b').hasMatch(sample)) return 'mr';
-    if (RegExp(r'\b(छ|गर्नु|हुन्छ|नेपाल)\b').hasMatch(sample)) return 'ne';
+    // Distinguish Hindi vs Marathi vs Nepali via common words. Dart's \b only
+    // understands ASCII word characters, so split on whitespace/punctuation instead.
+    final words = text.split(RegExp(r'[\s,.?!।॥]+')).toSet();
+    const marathiWords = {'आहे', 'आहेत', 'नाही', 'कसे', 'कसा', 'मला', 'तुम्ही', 'आम्ही', 'साठी', 'पाहिजे', 'सांगा'};
+    const nepaliWords = {'छ', 'गर्नु', 'हुन्छ', 'नेपाल'};
+    if (words.any(marathiWords.contains)) return 'mr';
+    if (words.any(nepaliWords.contains)) return 'ne';
     return 'hi';
   }
   return 'en'; // Default English
@@ -251,11 +255,20 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
   void _onTextChanged() {
     final text = _controller.text.trim();
     if (text.length < 3) return; // Need at least a few chars
-    final detected = _detectLanguageFromText(text);
-    if (detected != _selectedLang && detected != 'en') {
-      // Auto-switch language only when we detect a non-Latin script
-      setState(() => _selectedLang = detected);
+    final resolved = _resolveLanguage(text);
+    if (resolved != _selectedLang) {
+      setState(() => _selectedLang = resolved);
     }
+  }
+
+  /// Picks the language for [text], keeping the current selection when the text
+  /// can't tell: Latin script may be romanized Hindi/Gujarati/Marathi, and
+  /// Devanagari without Marathi-only words may still be Marathi.
+  String _resolveLanguage(String text) {
+    final detected = _detectLanguageFromText(text);
+    if (detected == 'en') return _selectedLang;
+    if (detected == 'hi' && _selectedLang == 'mr') return 'mr';
+    return detected;
   }
 
   void _onLanguageChanged(String lang) {
@@ -298,7 +311,13 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
             });
           }
         },
-        transcribeApi: (bytes, filename) => repo.transcribeAudio(bytes, filename, language: _selectedLang),
+        onLanguageDetected: (lang) {
+          if (mounted && lang != _selectedLang) {
+            setState(() => _selectedLang = lang);
+          }
+        },
+        // No language hint: Whisper detects the spoken language from the audio.
+        transcribeApi: (bytes, filename) => repo.transcribeAudio(bytes, filename),
         languageCode: _selectedLang,
       );
       if (mounted) setState(() => _isListening = false);
@@ -307,7 +326,12 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
 
       await voiceService.startListening(
         languageCode: _selectedLang,
-        transcribeApi: (bytes, filename) => repo.transcribeAudio(bytes, filename, language: _selectedLang),
+        transcribeApi: (bytes, filename) => repo.transcribeAudio(bytes, filename),
+        // User paused after speaking, or the time limit hit: run the same stop
+        // flow as tapping Done (Whisper transcription → send).
+        onAutoStop: () {
+          if (mounted && _isListening) _toggleVoiceListening();
+        },
         onResult: (text, isFinal) {
           if (mounted) {
             setState(() {
@@ -317,9 +341,9 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
               );
             });
             if (isFinal && text.isNotEmpty) {
-              final detected = _detectLanguageFromText(text);
-              if (detected != _selectedLang) {
-                setState(() => _selectedLang = detected);
+              final resolved = _resolveLanguage(text);
+              if (resolved != _selectedLang) {
+                setState(() => _selectedLang = resolved);
               }
             }
           }
@@ -352,6 +376,12 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
               _sendMessage(wasAskedViaVoice: true);
             } else if (recognizedText.isEmpty) {
               debugPrint('[VOICE] No speech captured or speech recognizer returned empty');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Couldn't hear you. Please try again, or type your question."),
+                  duration: Duration(seconds: 3),
+                ),
+              );
             }
           }
         },
@@ -383,9 +413,9 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
     debugPrint('===========================================================');
     debugPrint('[CHAT] Query received: "$text"');
 
-    final detectedLang = _detectLanguageFromText(text);
-    if (detectedLang != 'en' && detectedLang != _selectedLang) {
-      setState(() => _selectedLang = detectedLang);
+    final resolvedLang = _resolveLanguage(text);
+    if (resolvedLang != _selectedLang) {
+      setState(() => _selectedLang = resolvedLang);
     }
     final langToUse = _selectedLang;
 
@@ -420,13 +450,17 @@ class _AssistantChatScreenState extends ConsumerState<AssistantChatScreen> {
               .toList() ??
           [];
 
+      // The backend reports the language it actually answered in; use it so the
+      // reply is read aloud with the matching voice.
+      final answerLang = (respData['language'] as String?) ?? langToUse;
+
       final botMsg = ChatMessageModel(
         id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
         text: respData['answer'] as String,
         isUser: false,
         timestamp: DateTime.now(),
         citations: citationsData,
-        language: langToUse,
+        language: answerLang,
         isWebSearch: respData['web_search_used'] == true,
       );
 

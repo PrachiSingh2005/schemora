@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
-    # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./schemora_dev.db"
+    # Database — Schemora uses PostgreSQL + pgvector exclusively
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/schemora_db"
 
     # PostgreSQL pgvector Vector Database
     PGVECTOR_EMBEDDING_DIM: int = 768
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # External APIs — Groq AI
     GROQ_API_KEY: str = ""
-    GROQ_GENERATION_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_GENERATION_MODEL: str = "openai/gpt-oss-20b"
 
     FIREBASE_PROJECT_ID: str = ""
     FIREBASE_CLIENT_EMAIL: str = ""

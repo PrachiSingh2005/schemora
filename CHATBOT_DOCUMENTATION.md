@@ -17,7 +17,7 @@
 ## 1. System Architecture Overview
 
 ```
-┌──────────────────────────────┐     HTTP / WebSocket
+┌──────────────────────────────┐     HTTP (REST, JSON)
 │  Flutter Frontend (Android)  │ ────────────────────────────────►
 │  - AssistantChatScreen       │                                 │
 │  - VoiceAssistantService     │                                 │
@@ -49,9 +49,22 @@
 | Database | SQLite (dev) / PostgreSQL (prod) with pgvector extension |
 | Embeddings | TF-IDF (dev) / sentence-transformers (prod) |
 | LLM | Groq API — `llama-3.3-70b-versatile` model |
-| STT | Groq API — `whisper-large-v3` model |
-| TTS | Device-native `flutter_tts` (primary) / Google Translate TTS (fallback) |
+| STT | Device-native `speech_to_text` (live preview) + Groq API `whisper-large-v3` (final transcript and spoken-language detection); audio captured with `record` |
+| TTS | Device-native `flutter_tts` (the only engine the app uses) |
+| Server TTS (unused by app) | `POST /ai/text-to-speech` proxies Google Translate's unofficial `translate_tts` endpoint — undocumented, rate-limited, not for production |
 | HTTP Client | Dio (Flutter) / httpx (Python async) |
+
+### External APIs and Services
+
+| Service | Used for | Required? |
+|---------|----------|-----------|
+| Groq Chat Completions (`llama-3.3-70b-versatile`, falls back to `llama-3.1-8b-instant`, `llama3-8b-8192`) | Writing the final answer from retrieved context | Optional — without it a verified-KB summary is returned |
+| Groq Audio Transcriptions (`whisper-large-v3`) | Voice transcription + language detection | Required for voice language auto-detection |
+| Android/iOS speech recognizer (`speech_to_text`) | Live transcript while speaking; fallback if Whisper fails | Device-dependent |
+| Android/iOS TTS engine (`flutter_tts`) | Reading answers aloud | Device needs voice packs per language |
+| PostgreSQL + pgvector / SQLite | Knowledge base storage and vector search | Required |
+
+> `web_search_service.py` exists but is **not wired** into `/ai/chat`; `web_search_used` in the response is always `false` today.
 
 ---
 
@@ -86,10 +99,16 @@
  • Keyword matching boost
  • Entity-specific filtering
         ↓
+[Relevance gate: evaluate_chunk_relevance()]
+ • Discards retrieved chunks that neither score ≥ 0.045 nor share a keyword with the query
+ • Discarded → "couldn't find verified information" reply instead of a guess
+        ↓
 [Groq LLM Response: generate_grounded_chat_response()]
  • Context-grounded prompt construction
  • Language-specific instructions
  • Strict: answer only from retrieved context
+ • If Groq is unconfigured / times out (6 s per model): verified-KB summary card
+   with localized labels; non-English users get a notice that details are in English
         ↓
 [Citation Building: _build_citations()]
  • Per-scheme official URLs
@@ -119,6 +138,18 @@
 | `AMBIGUOUS` | Multiple matches | "Tell me about PM scheme" |
 | `UNKNOWN` | Unrecognized query | "xyzabc" |
 
+### Handling Uncertainty
+
+| Situation | Response | `is_grounded` |
+|-----------|----------|---------------|
+| Answer generated from retrieved KB context | Answer + per-scheme citations | `true` |
+| Nothing relevant retrieved | "I couldn't find verified information…" + official-portal pointer | `false` |
+| Specific question without a scheme name | Asks which scheme | `false` |
+| Ambiguous / unrecognized query | Asks the user to clarify | `false` |
+| Out-of-scope topic (weather, cricket…) | Scope refusal | `false` |
+| Greeting / thanks / goodbye | Canned reply | `true` |
+| Portal question (MahaDBT, NSP, myScheme, Jan Samarth) | That portal's own description / apply steps + official URL | `true` |
+
 ---
 
 ## 3. Voice Assistant Pipeline
@@ -129,23 +160,29 @@
 [User Taps Microphone Button]
         ↓
 [VoiceAssistantService.startListening()]
+ • `record` captures raw audio (m4a) in parallel
+ • SpeechToText.listen() in the currently selected locale → live preview text
+   (Android Emulator: requires Google Speech Services)
         ↓
-[SpeechToText.listen() — device STT engine]
- • Android Emulator: requires Google Speech Services
- • Language detection automatic from typed script
+[User taps Done → VoiceAssistantService.stopListening()]
         ↓
-[onResult callback — partial results shown in text field]
-        ↓
-[onDone callback — fires when speech ends]
+[POST /ai/speech-to-text — Groq Whisper, NO language hint]
+ • Whisper detects the spoken language from the audio itself
+ • Backend maps Whisper's language name (e.g. "marathi") → ISO code
+ • Whisper transcript replaces the preview; language selector switches to the
+   detected language (onLanguageDetected)
+ • If Whisper fails, the device transcript is kept
         ↓
 [AssistantChatScreen._sendMessage(wasAskedViaVoice: true)]
         ↓
 [Same text chatbot pipeline as above...]
         ↓
 [TTS Playback: VoiceAssistantService.speak()]
- • flutter_tts plays bot response
- • Language auto-detected from response
+ • flutter_tts reads the answer using the `language` field returned by /ai/chat
+   (the language the answer was actually written in)
 ```
+
+**Limitation:** the live preview uses the device recognizer, which needs a locale up front, so the preview may be wrong until Whisper returns. Whisper is what makes "reply in the language you spoke" work — without `GROQ_API_KEY` voice only works in the pre-selected language.
 
 ### Voice Permissions (AndroidManifest.xml)
 
@@ -163,13 +200,14 @@
 | Empty transcription | Background noise / accent | Speak clearly, use text fallback |
 | Connection error | Backend unreachable | Check emulator network `10.0.2.2:8000` |
 
-### Network Fallback (Android Emulator)
+### Backend URL Selection
 
-The `AIRepositoryImpl` tries these hosts in order:
-1. Configured Dio base URL (from `api_client.dart`)
-2. `10.0.2.2:8000` (standard Android emulator localhost)
-3. `127.0.0.1:8000`
-4. `10.59.33.142:8000` (LAN IP fallback)
+`EnvConfig.baseUrl` (`lib/core/config/env_config.dart`) picks one URL — there is no multi-host retry:
+1. `--dart-define=API_BASE_URL=...` if provided
+2. Android: `http://10.0.2.2:8000/api/v1/` (emulator → host machine)
+3. Web / desktop: `http://127.0.0.1:8000/api/v1/`
+
+For a physical device, pass `API_BASE_URL` with your machine's LAN IP.
 
 ---
 
@@ -192,9 +230,16 @@ The `AIRepositoryImpl` tries these hosts in order:
 
 ### Language Detection
 
-**Frontend**: Automatic script detection from Unicode block ranges  
-**Backend**: `language_service.py` uses regex patterns for each script  
-**LLM Prompt**: Explicit instruction to respond ONLY in detected language — no mixing
+The language the user *writes or speaks in* wins; the app's selected language is only a hint.
+
+**Frontend** (`_detectLanguageFromText` / `_resolveLanguage`): Unicode script ranges. Devanagari is Marathi if it contains Marathi-only words (आहे, नाही, मला…), otherwise Hindi — unless Marathi is already selected. Latin text keeps the current selection.  
+**Backend** (`language_service.detect_language(text, hint)`):
+1. Native script → that language (Devanagari: Marathi markers or `hint=mr` → Marathi, else Hindi)
+2. Latin text + hint `hi`/`gu`/`mr` + romanized markers of that language (e.g. *kya, hai, liye* / *che, shu, mate* / *aahe, mala, sathi*) → hint language
+3. Other Latin text → English  
+**Voice**: Whisper's detected spoken language (see §3).  
+**LLM Prompt**: Explicit instruction to respond ONLY in the detected language — no mixing.  
+**Response**: `/ai/chat` returns `language`, which the app uses for TTS.
 
 ### Language Response Flow
 
@@ -205,14 +250,18 @@ The `AIRepositoryImpl` tries these hosts in order:
         ↓ POST /api/v1/ai/chat {question: "...", language: "hi"}
 [Backend: language_service.detect_language() → hi]
         ↓
-[Query Understanding: translate_query_for_retrieval() for English retrieval]
+[translate_query_for_retrieval(): Indic keywords → English domain terms
+ (Hindi, Marathi, Gujarati, Bengali, Tamil, Telugu, Kannada, Malayalam, Punjabi,
+  plus common romanized words)]
         ↓
-[pgvector retrieval using English translation]
+[pgvector retrieval using the expanded query]
         ↓
 [Groq prompt: "CRITICAL: Respond STRICTLY AND ONLY IN HINDI (हिंदी)"]
         ↓
-[Hindi response returned, no English mixing]
+[Hindi response returned with "language": "hi"]
 ```
+
+**Limitation:** the knowledge base is English. Non-English answers depend on Groq translating the context; if Groq is unavailable the fallback card shows English details with localized labels and a notice.
 
 ---
 
@@ -271,7 +320,7 @@ For `DEFINITION_CONCEPT` queries, a special glossary of government scheme terms 
 ### Installation
 
 ```powershell
-cd d:\Schemora\backend
+cd backend
 uv sync
 ```
 
@@ -293,7 +342,7 @@ PORT=8000
 ### Running the Backend
 
 ```powershell
-cd d:\Schemora\backend
+cd backend
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -311,8 +360,8 @@ uv run python scripts/run_kb_indexing.py
 ### Knowledge Base Dataset Location
 
 ```
-d:\Schemora\data\schemes\schemes.v1.json   (primary)
-d:\Schemora\backend\data\final\schemes.json (fallback)
+data/schemes/schemes.v1.json      (primary)
+backend/data/final/schemes.json   (fallback)
 ```
 
 ---
@@ -327,7 +376,7 @@ d:\Schemora\backend\data\final\schemes.json (fallback)
 ### Installation
 
 ```powershell
-cd d:\Schemora\frontend
+cd frontend
 flutter pub get
 ```
 
@@ -339,10 +388,9 @@ flutter run -d <emulator_device_id>
 
 ### API Base URL Configuration
 
-Located in `lib/core/network/api_client.dart`:
-```dart
-// For Android Emulator: Use 10.0.2.2 to reach host machine
-const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+Computed by `EnvConfig.baseUrl` in `lib/core/config/env_config.dart` (see §3 "Backend URL Selection"). Override it at build time:
+```powershell
+flutter run --dart-define=API_BASE_URL=http://<your-lan-ip>:8000/api/v1/
 ```
 
 ### Microphone Permission Handling
@@ -376,6 +424,7 @@ Chat with the AI assistant.
   "data": {
     "answer": "PM-KISAN is a Central Government scheme...",
     "is_grounded": true,
+    "language": "en",
     "citations": [{"source_name": "...", "url": "...", "last_verified_at": "..."}],
     "retrieved_schemes": [...],
     "confidence_score": 0.85,
@@ -391,7 +440,9 @@ Transcribe audio to text (multipart form).
 
 **Form fields:**
 - `file`: Audio file (WAV, MP3, M4A, WebM)
-- `language`: Optional ISO language code hint
+- `language`: Optional ISO language code. **Omit it** to let Whisper detect the spoken language (the app omits it).
+
+`language` in the response is the detected ISO code (Whisper's detection when it names a supported language, otherwise script detection on the transcript); `raw_language` is Whisper's raw label.
 
 **Response:**
 ```json
@@ -416,6 +467,8 @@ Generate speech audio from text.
 
 **Response:** Raw MP3 audio bytes (`audio/mpeg`)
 
+> Uses Google Translate's unofficial `translate_tts` endpoint. The Flutter app does **not** call this endpoint (it uses on-device `flutter_tts`); treat it as a dev/testing utility.
+
 ### GET `/api/v1/ai/knowledge-base/status`
 
 Get knowledge base statistics.
@@ -426,55 +479,66 @@ Trigger full re-indexing of schemes dataset.
 
 ---
 
-## 9. Acceptance Test Results
+## 9. Acceptance Test Checklist
+
+These are the acceptance checks for each requirement. Record the result and date when you run them — a row is only "passed" once it has been run against the current code. Items marked *(changed 2026-09-17)* cover behaviour changed in the latest fix round and have **not been re-run yet**.
 
 ### Requirement 1: Search via Chatbot
 
-| # | Test Query | Expected Behavior | Status |
-|---|-----------|-------------------|--------|
-| 1 | "hello" | Greeting response (no scheme clarification) | ✅ PASS |
-| 2 | "hi" | Greeting response | ✅ PASS |
-| 3 | "What is a government scheme?" | Definition response | ✅ PASS |
-| 4 | "Tell me about PM-KISAN" | PM-KISAN scheme overview | ✅ PASS |
-| 5 | "Documents for PM-KISAN" | Document checklist | ✅ PASS |
-| 6 | "How to apply for PM-KISAN" | Step-by-step process | ✅ PASS |
-| 7 | "Schemes for farmers in Maharashtra" | List of farmer schemes | ✅ PASS |
-| 8 | "Scholarships for students" | List of scholarships | ✅ PASS |
-| 9 | "Compare PM-KISAN vs PM Internship" | Comparison table | ✅ PASS |
-| 10 | "What are the eligibilty criteria for PM-KISAN?" (typo) | Correct eligibility info | ✅ PASS |
-| 11 | "xyzabc" | "I'm not sure what you mean" | ✅ PASS |
+| # | Test Query | Expected Behavior |
+|---|-----------|-------------------|
+| 1 | "hello" | Greeting response (no scheme clarification) |
+| 2 | "hi" | Greeting response |
+| 3 | "What is a government scheme?" | Definition response |
+| 4 | "Tell me about PM-KISAN" | PM-KISAN scheme overview |
+| 5 | "Documents for PM-KISAN" | Document checklist |
+| 6 | "How to apply for PM-KISAN" | Step-by-step process |
+| 7 | "Schemes for farmers in Maharashtra" | List of farmer schemes |
+| 8 | "Scholarships for students" | List of scholarships |
+| 9 | "Compare PM-KISAN vs PM Internship" | Comparison table |
+| 10 | "What are the eligibilty criteria for PM-KISAN?" (typo) | Correct eligibility info |
+| 11 | "xyzabc" | "I'm not sure what you mean" |
+| 12 | Scheme name present but KB returns nothing *(changed)* | DB fallback answer, not the generic error message |
 
 ### Requirement 2: Voice Support
 
-| # | Test | Expected | Status |
-|---|------|----------|--------|
-| 1 | Tap mic button | "Listening..." UI shown | ✅ |
-| 2 | Speak "hello" | Text appears in input field | ✅ |
-| 3 | Speech ends | Query sent to chatbot | ✅ |
-| 4 | Bot responds | TTS plays response audio | ✅ |
-| 5 | Error handling | Clear error SnackBar shown | ✅ |
+| # | Test | Expected |
+|---|------|----------|
+| 1 | Tap mic button | "Listening..." UI shown |
+| 2 | Speak "hello" | Text appears in input field |
+| 3 | Tap Done | Query sent to chatbot |
+| 4 | Bot responds | TTS plays response audio |
+| 5 | Error handling | Clear error SnackBar shown |
+| 6 | App set to English, speak Gujarati *(changed)* | Transcript in Gujarati, language chip switches to Gujarati, answer spoken in Gujarati |
+| 7 | App set to Hindi, type an English question *(changed)* | English answer read with an English voice |
 
 ### Requirement 3: Multilingual
 
-| # | Query | Language | Expected Response Language | Status |
-|---|-------|----------|--------------------------|--------|
-| 1 | "पीएम किसान क्या है?" | hi | Hindi response only | ✅ |
-| 2 | "PM Kisan ke liye documents?" | hi (Hinglish) | Hindi/English response | ✅ |
-| 3 | "PM Kisan schemana documents?" | gu | Gujarati response | ✅ |
-| 4 | "hello" | en | English greeting | ✅ |
+| # | Query | App language | Expected Response Language |
+|---|-------|--------------|--------------------------|
+| 1 | "पीएम किसान क्या है?" | any | Hindi |
+| 2 | "PM Kisan ke liye kya documents chahiye?" *(changed)* | hi | Hindi |
+| 3 | "PM Kisan mate kya documents joie?" *(changed)* | gu | Gujarati |
+| 4 | "PM Kisan documents?" | gu | English (no Gujarati markers) |
+| 5 | "मला पीएम किसान योजनेची माहिती हवी आहे" *(changed)* | en | Marathi |
+| 6 | "hello" | en | English greeting |
+| 7 | Hindi question with `GROQ_API_KEY` unset *(changed)* | hi | Hindi notice + Hindi labels, details in English |
 
 ### Requirement 4: Accurate Answers
 
-| # | Test | Expected | Status |
-|---|------|----------|--------|
-| 1 | PM-KISAN response contains correct ₹6000 amount | From verified KB | ✅ |
-| 2 | Citations contain scheme-specific URLs | No india.gov.in generic links | ✅ |
-| 3 | Greeting doesn't return scheme clarification | Intent detection accurate | ✅ |
-| 4 | Typo tolerance ("eligibilty" → ELIGIBILITY intent) | Fuzzy matching works | ✅ |
+| # | Test | Expected |
+|---|------|----------|
+| 1 | PM-KISAN response contains correct ₹6000 amount | From verified KB |
+| 2 | Citations contain scheme-specific URLs | No india.gov.in generic links |
+| 3 | Greeting doesn't return scheme clarification | Intent detection accurate |
+| 4 | Typo tolerance ("eligibilty" → ELIGIBILITY intent) | Fuzzy matching works |
+| 5 | "Tell me about NSP scholarship" *(changed)* | Describes the Government of India portal — no mention of Maharashtra |
+| 6 | Query with only weakly-related KB matches *(changed)* | "Couldn't find verified information", `is_grounded: false` |
+| 7 | "How do I apply?" (no scheme) *(changed)* | Asks for scheme name, `is_grounded: false` |
 
 ### Requirement 5: Documentation
 
-This document. ✅
+This document, including the tools/APIs table in §1.
 
 ---
 
@@ -501,7 +565,17 @@ This document. ✅
 
 **Issue**: `localhost` doesn't work inside Android emulator; must use `10.0.2.2`.
 
-**Workaround**: Already handled via multi-host fallback in `AIRepositoryImpl`.
+**Workaround**: `EnvConfig.baseUrl` uses `10.0.2.2` on Android automatically. On a physical device, pass `--dart-define=API_BASE_URL=http://<lan-ip>:8000/api/v1/`.
+
+### Voice Language Detection Needs Groq
+
+**Issue**: Only Whisper can detect the spoken language. Without `GROQ_API_KEY` (or if the call fails), the device recognizer's transcript in the pre-selected locale is used.
+
+**Workaround**: Configure `GROQ_API_KEY`, or select the language in the app before speaking.
+
+### Groq Timeout → English Details
+
+**Issue**: Groq calls time out after 6 s per model. When all models fail, non-English users get the KB summary in English (with localized labels and a notice), because the knowledge base is English-only.
 
 ### Knowledge Base (Development)
 
@@ -519,4 +593,4 @@ This document. ✅
 
 ---
 
-*Documentation version: 1.0 — Last updated: 2026-09-17*
+*Documentation version: 1.1 — Last updated: 2026-09-17*

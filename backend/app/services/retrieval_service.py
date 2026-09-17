@@ -253,18 +253,7 @@ CONCEPT_KEYWORDS = [
     "disability certificate", "udid", "renewal", "csc", "common service centre",
     "योजना", "सरकारी योजना", "केंद्र सरकार की योजना", "राज्य सरकार की योजना", "पात्रता", "लाभार्थी", "लाभ", "आवश्यक दस्तावेज", "आवेदन प्रक्रिया", "सब्सिडी", "वित्तीय सहायता",
     "छात्रवृत्ति", "प्रत्यक्ष लाभ अंतरण", "आय प्रमाण पत्र", "जाति प्रमाण पत्र", "निवास प्रमाण पत्र", "नवीनीकरण",
-    "યોજના", "સરકારી યોજના", "કેન્દ્ર સરકારની યોજના", "રાજ્ય સરકારની યોજના", "પાત્રતા", "લાભાર્થી", "લાભો", "જરૂરી દસ્તાવેજો", "અરજી પ્રક્રિયા", "સબસીડી", "નાણાકીય સહાય",
-    "શિષ્યવૃત્તિ", "ડાયરેક્ટ બેનિફિટ ટ્રાન્સફર", "આવક પ્રમાણ પત્ર", "જ્ઞાતિ પ્રમાણ પત્ર", "ડોમિસાઇલ", "નવીકરણ",
-]
-
-KNOWN_SPECIFIC_SCHEME_TITLES = [
-    "pm-kisan", "pm kisan", "kisan samman", "pm internship", "post matric", "post-matric",
-    "pre matric", "pre-matric", "nsp", "sukanya samriddhi", "ayushman bharat", "pmegp",
-    "mudra", "mysy", "ladki bahin", "pudhumai penn", "gruha lakshmi", "samarth",
-]
-
-
-def is_definition_query(query: str) -> bool:
+    "યોજના", "સરકારી �def is_definition_query(query: str) -> bool:
     """Semantic detector for definition and conceptual questions about government schemes."""
     q = query.lower().strip()
 
@@ -273,15 +262,28 @@ def is_definition_query(query: str) -> bool:
         if title in q:
             return False
 
-    # 2. Exclusion Check: If query has demographic target filters ("for students", "for farmers") or list requests
-    demographic_patterns = [
-        r"\bfor\s+(?:students?|farmers?|women|female|girls?|obc|sc|st|ews|minorities?|seniors?|entrepreneurs?|single\s+girl)\b",
-        r"\b(?:students?|farmers?|women|female|girls?|obc|sc|st|ews|minorities?|seniors?|entrepreneurs?)\s+schemes?\b",
-        r"\bfor\s+(?:विद्यार्थी|किसान|महिला|छात्र|વિદ્યાર્થીઓ|ખેડૂતો|મહિલાઓ)\b",
-    ]
-    has_demographic = any(re.search(pat, q) for pat in demographic_patterns)
-    is_list_request = any(lr in q for lr in ["available", "list of", "list all", "show me", "find schemes", "which schemes", "schemes for"])
-    if has_demographic or is_list_request:
+    # 2. Exclusion Check: If query has demographic/profile target filters or list/discovery requests
+    from app.services.query_understanding_service import extract_profile_attributes
+    profile_attrs = extract_profile_attributes(query)
+
+    is_list_request = any(lr in q for lr in [
+        "available", "list of", "list all", "show me", "find schemes", "which schemes",
+        "schemes for", "give me schemes", "what schemes", "programs for", "scholarships for"
+    ])
+
+    has_profile_target = bool(
+        profile_attrs.get("occupation")
+        or profile_attrs.get("gender")
+        or profile_attrs.get("education")
+        or profile_attrs.get("caste_category")
+        or profile_attrs.get("beneficiary")
+        or profile_attrs.get("disability")
+        or profile_attrs.get("residence")
+        or profile_attrs.get("employment_status")
+        or profile_attrs.get("extracted_terms")
+    )
+
+    if has_profile_target or is_list_request:
         return False
 
     # 3. Generalized Definitional Intent Triggers (English, Hindi, Gujarati, Marathi, etc.)
@@ -429,22 +431,36 @@ def detect_intent(query: str, conversation_context: Optional[Dict[str, Any]] = N
             if re.search(pat, norm_q):
                 return intent
 
-    # Priority 5: SCHEME_DISCOVERY broad query detection & demographic discovery
+    # Priority 5: SCHEME_DISCOVERY broad query & generic profile/demographic discovery
     broad_patterns = [
         r"\bwhat\s+schemes?\b",
         r"\bschemes?\s+available\b",
-        r"\b(?:list|show|find|tell|all)\b.*(?:schemes?|scholarships?|yojana)\b",
-        r"योजनाएं", r"छात्रवृत्ति", r"યોજનાઓ", r"સરકારી\s+યોજનાઓ"
+        r"\b(?:list|show|find|tell|all|give\s+me)\b.*(?:schemes?|scholarships?|yojana)\b",
+        r"\bschemes?\s+for\b",
+        r"\bfor\s+.*\s+schemes?\b",
+        r"\bwhat\s+schemes?\s+can\s+i\s+apply\b",
+        r"योजनाएं", r"छात्रवृत्ति", r"<ctrl42>યોજનાઓ", r"સરકારી\s+યોજનાઓ"
     ]
     for bp in broad_patterns:
         if re.search(bp, norm_q):
             return "SCHEME_DISCOVERY"
 
-    # "which scholarships/schemes can I apply for?" or "schemes for students/farmers"
+    # "which scholarships/schemes can I apply for?" or extracted profile attributes
     if re.search(r"\bwhich\b", norm_q) and re.search(r"\b(?:scholarships?|schemes?|programs?|yojana)\b", norm_q):
         return "SCHEME_DISCOVERY"
-    if any(dk in norm_q for dk in ["for students", "for farmers", "for women", "for obc", "for sc", "for st", "scholarship", "scholarships"]):
+    if qu_res.extracted_profile and (
+        qu_res.extracted_profile.get("occupation")
+        or qu_res.extracted_profile.get("gender")
+        or qu_res.extracted_profile.get("education")
+        or qu_res.extracted_profile.get("caste_category")
+        or qu_res.extracted_profile.get("beneficiary")
+        or qu_res.extracted_profile.get("disability")
+        or qu_res.extracted_profile.get("residence")
+        or qu_res.extracted_profile.get("employment_status")
+        or qu_res.extracted_profile.get("extracted_terms")
+    ):
         return "SCHEME_DISCOVERY"
+
     if qu_res.detected_state:
         return "SCHEME_DISCOVERY"
 
@@ -457,7 +473,6 @@ def detect_intent(query: str, conversation_context: Optional[Dict[str, Any]] = N
         return "UNKNOWN"
 
     return "GENERAL"
-
 
 
 DEMOGRAPHIC_EXPANSIONS = {
@@ -474,18 +489,34 @@ DEMOGRAPHIC_EXPANSIONS = {
 
 
 def expand_query(query: str, intent: str) -> str:
-    """Expand query with relevant terms based on intent, script translation, and social/demographic category mentions."""
+    """Expand query with relevant terms based on intent, script translation, and extracted profile attributes."""
     from app.services.language_service import language_registry
+    from app.services.query_understanding_service import extract_profile_attributes
     spec = language_registry.detect_language(query)
     base_query = language_registry.translate_query_for_retrieval(query, spec)
 
     q_lower = query.lower()
 
-    # Demographic category expansion (e.g. women, farmer, health, etc.)
-    demo_expansion = ""
+    # Dynamic Profile Expansion based on extracted attributes
+    profile_attrs = extract_profile_attributes(query)
+    extracted_terms = profile_attrs.get("extracted_terms", [])
+
+    demo_terms = set(extracted_terms)
+    if profile_attrs.get("occupation"):
+        demo_terms.add(str(profile_attrs["occupation"]))
+    if profile_attrs.get("gender"):
+        demo_terms.add(str(profile_attrs["gender"]))
+    if profile_attrs.get("education"):
+        demo_terms.add(str(profile_attrs["education"]))
+    if profile_attrs.get("beneficiary"):
+        demo_terms.add(str(profile_attrs["beneficiary"]))
+
+    # Add legacy synonyms if key matches
     for kw, exp in DEMOGRAPHIC_EXPANSIONS.items():
         if kw in q_lower:
-            demo_expansion += exp
+            demo_terms.add(exp.strip())
+
+    demo_expansion = " ".join(demo_terms)
 
     # Social category expansion (OBC, SC, ST, EWS)
     social_expansion = ""
@@ -494,7 +525,7 @@ def expand_query(query: str, intent: str) -> str:
             social_expansion += f" {synonyms}"
             break
 
-    # Intent-based expansion (avoid appending 'scholarship' if user didn't ask for scholarship)
+    # Intent-based expansion
     intent_expansion = INTENT_QUERY_EXPANSIONS.get(intent, "")
     if "scholarship" in intent_expansion and "scholarship" not in q_lower:
         intent_expansion = intent_expansion.replace("scholarship", "")
@@ -530,18 +561,42 @@ def _compute_keyword_boost(query: str, chunk: KnowledgeChunk) -> float:
     content = (chunk.content or "").lower()
     state = (chunk.state or "").lower()
 
-    full_chunk_text = f"{scheme_name} {category} {content}"
+    full_chunk_text = f"{scheme_name} {category} {content} {state}"
 
-    # High-precision demographic domain boosts
-    if any(w in q_lower for w in ["women", "female", "girl", "mahila", "kanya", "lady", "daughter"]):
-        women_keywords = ["women", "female", "mahila", "ladki", "girl", "kanya", "matru", "maternity", "pudhumai", "gruha", "sukanya", "tread", "womenempowerment"]
-        if any(kw in full_chunk_text for kw in women_keywords):
-            boost += 0.45
+    from app.services.query_understanding_service import extract_profile_attributes
+    profile_attrs = extract_profile_attributes(query)
+    extracted_terms = profile_attrs.get("extracted_terms", [])
 
-    if any(w in q_lower for w in ["farmer", "kisan", "agri", "crop", "farm", "krishi"]):
-        farmer_keywords = ["kisan", "farmer", "agri", "crop", "irrigation", "livestock", "matsya", "raitha", "sinchayee", "mechanization", "agriculture", "fasal", "bima", "kusum", "samman"]
-        if any(kw in full_chunk_text for kw in farmer_keywords):
-            boost += 0.45
+    # Generic high-precision attribute matching boost
+    for term in extracted_terms:
+        term_clean = term.lower()
+        if len(term_clean) > 2 and term_clean in full_chunk_text:
+            boost += 0.35
+
+    if profile_attrs.get("occupation") and str(profile_attrs["occupation"]).lower() in full_chunk_text:
+        boost += 0.20
+    if profile_attrs.get("gender") and str(profile_attrs["gender"]).lower() in full_chunk_text:
+        boost += 0.20
+
+    # Penalty for generic glossary definition chunks during scheme discovery queries
+    if category in ["glossary", "Glossary"] or scheme_name == "schemora knowledge glossary" or section in ["concept", "glossary"]:
+        if profile_attrs.get("extracted_terms") or any(w in q_lower for w in ["give me", "list", "available", "schemes related", "schemes for", "what schemes"]):
+            boost -= 0.50
+
+    # Standard word matches
+    for w in q_words:
+        if w in scheme_name:
+            boost += 0.15
+        if w in category:
+            boost += 0.12
+        if w in section:
+            boost += 0.05
+        if state and w in state:
+            boost += 0.10
+        if w in content:
+            boost += 0.03
+
+    return min(0.60, max(-0.50, boost))+= 0.45
 
     if any(w in q_lower for w in ["health", "medical", "hospital", "doctor"]):
         health_keywords = ["health", "ayushman", "medical", "doctor", "janani", "clinic", "janaushadhi", "pmssy", "nhm"]

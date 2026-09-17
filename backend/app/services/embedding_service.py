@@ -52,12 +52,45 @@ def is_dense_embedding(data: Union[Dict, List, None]) -> bool:
     return isinstance(data, list) and len(data) > 10
 
 
-async def generate_embedding(text: str) -> Optional[List[float]]:
-    """Generates dense embedding vectors if external dense model configured.
+import hashlib
 
-    Returns None to fallback to TF-IDF representation.
+def _generate_dense_vector_768(text: str) -> List[float]:
+    """Generates a 768-dimensional dense float vector for text feature matching.
+
+    Compatible with PostgreSQL pgvector (Vector(768)). Fast execution (< 0.1ms).
     """
-    return None
+    dim = 768
+    vec = [0.0] * dim
+    words = re.findall(r"\w+", text.lower())
+    if not words:
+        return vec
+
+    features = list(words)
+    for i in range(len(words) - 1):
+        features.append(f"{words[i]}_{words[i+1]}")
+    for w in words:
+        if len(w) >= 3:
+            for i in range(len(w) - 2):
+                features.append(f"ngram_{w[i:i+3]}")
+
+    for feat in features:
+        h_bytes = hashlib.sha256(feat.encode("utf-8")).digest()
+        idx = int.from_bytes(h_bytes[:4], "big") % dim
+        sign = 1.0 if (h_bytes[4] % 2 == 0) else -1.0
+        vec[idx] += sign
+
+    norm = math.sqrt(sum(x * x for x in vec))
+    if norm > 0:
+        vec = [round(x / norm, 6) for x in vec]
+
+    return vec
+
+
+async def generate_embedding(text: str) -> Optional[List[float]]:
+    """Generates 768-dim dense embedding vectors for PostgreSQL pgvector storage."""
+    if not text or not text.strip():
+        return None
+    return _generate_dense_vector_768(text)
 
 
 def embedding_to_json(embedding: Union[List[float], Dict[str, float], None]) -> str:

@@ -213,17 +213,24 @@ class LanguageRegistry:
             return self.get_spec(hint_code or "en")
 
         text_stripped = text.strip()
+        hint = (hint_code or "").lower()
 
         # 1. Check specific Indic/Non-English script ranges first
         for code, spec in self._languages.items():
             if spec.script_regex and spec.code != "en":
                 if re.search(spec.script_regex, text_stripped):
-                    # Special case: Devanagari script used by both Hindi and Marathi
-                    if spec.code in ("hi", "mr") and hint_code == "mr":
-                        return self.get_spec("mr")
+                    # Devanagari is shared by Hindi and Marathi — use Marathi-only words, then the hint
+                    if spec.code in ("hi", "mr"):
+                        if hint == "mr" or self._has_marker(text_stripped, self.MARATHI_MARKERS):
+                            return self.get_spec("mr")
+                        return self.get_spec("hi")
                     return spec
 
-        # 2. If text contains Latin letters (English words), treat as English
+        # 2. Romanized Indic (e.g. Hinglish) — honour the user's chosen language when the
+        #    text carries clear markers of it; otherwise Latin text is English.
+        if hint in self.ROMANIZED_MARKERS and self._has_marker(text_stripped.lower(), self.ROMANIZED_MARKERS[hint]):
+            return self.get_spec(hint)
+
         latin_char_count = len(re.findall(r"[A-Za-z]", text_stripped))
         if latin_char_count >= 3 or not text_stripped:
             return DEFAULT_EN
@@ -233,6 +240,28 @@ class LanguageRegistry:
             return self.get_spec(hint_code)
 
         return DEFAULT_EN
+
+    # Words common in Marathi but not used in Hindi.
+    MARATHI_MARKERS = {
+        "आहे", "आहेत", "नाही", "मला", "तुम्ही", "आम्ही", "कसा", "कसे", "कशी",
+        "काय", "साठी", "मिळेल", "पाहिजे", "कोणती", "कोणत्या", "सांगा", "योजनेची", "योजनेचे",
+    }
+
+    # Romanized words that only appear when someone writes that language in Latin script.
+    ROMANIZED_MARKERS = {
+        "hi": {"hai", "hain", "kya", "kaise", "kaun", "kitna", "kitni", "liye", "mujhe",
+               "chahiye", "milega", "bataiye", "batao", "ke", "ki", "nahi", "kab"},
+        "gu": {"che", "chhe", "shu", "kem", "mate", "mane", "joie", "joiye", "kevi",
+               "rite", "karvi", "maate", "kyare", "nathi"},
+        "mr": {"aahe", "ahe", "kasa", "kase", "mala", "sathi", "pahije", "kay",
+               "sanga", "milel", "nahi", "konti"},
+    }
+
+    @staticmethod
+    def _has_marker(text: str, markers: set) -> bool:
+        # Explicit Indic range: Python's \w does not match vowel signs (matras)
+        tokens = re.findall(r"[\wऀ-ൿ]+", text)
+        return any(t in markers for t in tokens)
 
     INDIC_KEYWORD_MAP = {
         # Hindi
@@ -258,6 +287,73 @@ class LanguageRegistry:
         "પાત્રતા": "eligibility criteria qualification",
         "અરજી": "application apply process portal",
         "લાભ": "benefits amount financial assistance",
+        # Marathi (Hindi entries above already cover shared words like किसान, पात्रता, लाभ)
+        "योजने": "scheme yojana",
+        "शिष्यवृत्ती": "scholarship student education",
+        "शेतकरी": "farmer kisan agriculture crop",
+        "महिलां": "women female girl mahila",
+        "कागदपत्र": "documents papers certificate proof",
+        "अर्ज": "application apply process portal",
+        "विद्यार्थी": "students education scholarship",
+        # Bengali
+        "প্রকল্প": "scheme yojana",
+        "বৃত্তি": "scholarship student education",
+        "কৃষক": "farmer kisan agriculture crop",
+        "মহিলা": "women female girl mahila",
+        "নথি": "documents papers certificate proof",
+        "যোগ্যতা": "eligibility criteria qualification",
+        "আবেদন": "application apply process portal",
+        # Tamil
+        "திட்ட": "scheme yojana",
+        "உதவித்தொகை": "scholarship student education",
+        "விவசாய": "farmer kisan agriculture crop",
+        "பெண்": "women female girl mahila",
+        "ஆவண": "documents papers certificate proof",
+        "தகுதி": "eligibility criteria qualification",
+        "விண்ணப்ப": "application apply process portal",
+        # Telugu
+        "పథక": "scheme yojana",
+        "ఉపకార వేతన": "scholarship student education",
+        "రైతు": "farmer kisan agriculture crop",
+        "మహిళ": "women female girl mahila",
+        "పత్రాలు": "documents papers certificate proof",
+        "అర్హత": "eligibility criteria qualification",
+        "దరఖాస్తు": "application apply process portal",
+        # Kannada
+        "ಯೋಜನೆ": "scheme yojana",
+        "ವಿದ್ಯಾರ್ಥಿವೇತನ": "scholarship student education",
+        "ರೈತ": "farmer kisan agriculture crop",
+        "ಮಹಿಳ": "women female girl mahila",
+        "ದಾಖಲೆ": "documents papers certificate proof",
+        "ಅರ್ಹತೆ": "eligibility criteria qualification",
+        "ಅರ್ಜಿ": "application apply process portal",
+        # Malayalam
+        "പദ്ധതി": "scheme yojana",
+        "സ്കോളർഷിപ്പ്": "scholarship student education",
+        "കർഷക": "farmer kisan agriculture crop",
+        "സ്ത്രീ": "women female girl mahila",
+        "രേഖ": "documents papers certificate proof",
+        "യോഗ്യത": "eligibility criteria qualification",
+        "അപേക്ഷ": "application apply process portal",
+        # Punjabi
+        "ਯੋਜਨਾ": "scheme yojana",
+        "ਵਜ਼ੀਫ਼ਾ": "scholarship student education",
+        "ਕਿਸਾਨ": "farmer kisan agriculture crop",
+        "ਔਰਤ": "women female girl mahila",
+        "ਦਸਤਾਵੇਜ਼": "documents papers certificate proof",
+        "ਯੋਗਤਾ": "eligibility criteria qualification",
+        "ਅਰਜ਼ੀ": "application apply process portal",
+        # Romanized Hindi / Gujarati / Marathi
+        "chhatravritti": "scholarship student education",
+        "shishyavrutti": "scholarship student education",
+        "kheti": "farmer agriculture crop",
+        "khedut": "farmer agriculture crop",
+        "shetkari": "farmer agriculture crop",
+        "dastavej": "documents papers certificate proof",
+        "kagadpatra": "documents papers certificate proof",
+        "patrata": "eligibility criteria qualification",
+        "aavedan": "application apply process portal",
+        "arji": "application apply process portal",
     }
 
     def translate_query_for_retrieval(self, query: str, detected_spec: LanguageSpec) -> str:

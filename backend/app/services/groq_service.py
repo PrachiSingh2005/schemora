@@ -27,11 +27,11 @@ try:
 except Exception:
     class _Settings:
         GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-        GROQ_GENERATION_MODEL = os.getenv("GROQ_GENERATION_MODEL", "llama-3.3-70b-versatile")
+        GROQ_GENERATION_MODEL = os.getenv("GROQ_GENERATION_MODEL", "openai/gpt-oss-20b")
     settings = _Settings()
 
 from app.services.language_service import language_registry, LanguageSpec
-from app.services.retrieval_service import detect_intent, extract_query_entity_and_section
+from app.services.retrieval_service_impl import detect_intent, extract_query_entity_and_section
 from app.services.query_understanding_service import analyze_query_understanding
 
 logger = logging.getLogger(__name__)
@@ -47,13 +47,103 @@ OUT_OF_SCOPE_KEYWORDS = [
 ]
 
 
+# Portal descriptions keyed by EntityRegistry id, localized per language.
+_PORTAL_DESCRIPTIONS: Dict[str, Dict[str, str]] = {
+    "portal-mahadbt": {
+        "en": "the official Direct Benefit Transfer portal of the Government of Maharashtra for scholarships and welfare schemes.",
+        "hi": "महाराष्ट्र सरकार का आधिकारिक डीबीटी (प्रत्यक्ष लाभ अंतरण) पोर्टल, जिस पर छात्रवृत्ति और कल्याण योजनाओं के लिए आवेदन किया जाता है।",
+        "gu": "મહારાષ્ટ્ર સરકારનું સત્તાવાર DBT (પ્રત્યક્ષ લાભ ટ્રાન્સફર) પોર્ટલ, જ્યાં શિષ્યવૃત્તિ અને કલ્યાણ યોજનાઓ માટે અરજી થાય છે.",
+        "mr": "महाराष्ट्र शासनाचे अधिकृत डीबीटी (थेट लाभ हस्तांतरण) पोर्टल, जिथे शिष्यवृत्ती आणि कल्याणकारी योजनांसाठी अर्ज केला जातो.",
+    },
+    "portal-nsp": {
+        "en": "the Government of India's central portal for applying to national (Central and participating State) scholarships.",
+        "hi": "भारत सरकार का केंद्रीय पोर्टल, जिस पर राष्ट्रीय (केंद्र और भाग लेने वाले राज्यों की) छात्रवृत्तियों के लिए आवेदन किया जाता है।",
+        "gu": "ભારત સરકારનું કેન્દ્રીય પોર્ટલ, જ્યાં રાષ્ટ્રીય (કેન્દ્ર અને ભાગ લેનાર રાજ્યોની) શિષ્યવૃત્તિઓ માટે અરજી થાય છે.",
+        "mr": "भारत सरकारचे केंद्रीय पोर्टल, जिथे राष्ट्रीय (केंद्र व सहभागी राज्यांच्या) शिष्यवृत्तींसाठी अर्ज केला जातो.",
+    },
+    "portal-myscheme": {
+        "en": "a Government of India (National e-Governance Division) portal to search and check eligibility for Central and State government schemes.",
+        "hi": "भारत सरकार (राष्ट्रीय ई-गवर्नेंस प्रभाग) का पोर्टल, जिस पर केंद्र और राज्य सरकार की योजनाएं खोजी जा सकती हैं और पात्रता जांची जा सकती है।",
+        "gu": "ભારત સરકાર (રાષ્ટ્રીય ઈ-ગવર્નન્સ વિભાગ)નું પોર્ટલ, જ્યાં કેન્દ્ર અને રાજ્ય સરકારની યોજનાઓ શોધી શકાય છે અને પાત્રતા ચકાસી શકાય છે.",
+        "mr": "भारत सरकारचे (राष्ट्रीय ई-गव्हर्नन्स विभाग) पोर्टल, जिथे केंद्र व राज्य सरकारच्या योजना शोधता येतात आणि पात्रता तपासता येते.",
+    },
+    "portal-jansamarth": {
+        "en": "the Government of India's single portal for applying to credit-linked government schemes (loans with subsidy).",
+        "hi": "भारत सरकार का एकल पोर्टल, जिस पर ऋण से जुड़ी (सब्सिडी वाले लोन) सरकारी योजनाओं के लिए आवेदन किया जाता है।",
+        "gu": "ભારત સરકારનું એકલ પોર્ટલ, જ્યાં લોન સાથે જોડાયેલી (સબસિડીવાળી લોન) સરકારી યોજનાઓ માટે અરજી થાય છે.",
+        "mr": "भारत सरकारचे एकच पोर्टल, जिथे कर्जाशी संबंधित (अनुदानित कर्ज) सरकारी योजनांसाठी अर्ज केला जातो.",
+    },
+}
+
+_PORTAL_TEXT: Dict[str, Dict[str, Any]] = {
+    "en": {
+        "apply_title": "To apply on {name}:",
+        "visit": "1. Visit the official portal:",
+        "portal": "Official Portal",
+        "steps": [
+            "Register and create your applicant account.",
+            "Complete your profile details and upload the required documents.",
+            "Select the scheme you are eligible for and submit the application.",
+        ],
+    },
+    "hi": {
+        "apply_title": "{name} पर आवेदन कैसे करें:",
+        "visit": "1. आधिकारिक पोर्टल पर जाएं:",
+        "portal": "आधिकारिक पोर्टल",
+        "steps": [
+            "पंजीकरण करें और अपना आवेदक खाता बनाएं।",
+            "अपनी प्रोफाइल का विवरण भरें और आवश्यक दस्तावेज अपलोड करें।",
+            "जिस योजना के लिए आप पात्र हैं उसे चुनें और आवेदन जमा करें।",
+        ],
+    },
+    "gu": {
+        "apply_title": "{name} પર અરજી કેવી રીતે કરવી:",
+        "visit": "1. સત્તાવાર પોર્ટલની મુલાકાત લો:",
+        "portal": "સત્તાવાર પોર્ટલ",
+        "steps": [
+            "નોંધણી કરો અને તમારું અરજદાર ખાતું બનાવો.",
+            "પ્રોફાઇલ વિગતો ભરો અને જરૂરી દસ્તાવેજો અપલોડ કરો.",
+            "તમે જે યોજના માટે પાત્ર છો તે પસંદ કરો અને અરજી સબમિટ કરો.",
+        ],
+    },
+    "mr": {
+        "apply_title": "{name} वर अर्ज कसा करावा:",
+        "visit": "1. अधिकृत पोर्टलला भेट द्या:",
+        "portal": "अधिकृत पोर्टल",
+        "steps": [
+            "नोंदणी करा आणि तुमचे अर्जदार खाते तयार करा.",
+            "तुमच्या प्रोफाइलचा तपशील भरा आणि आवश्यक कागदपत्रे अपलोड करा.",
+            "ज्या योजनेसाठी तुम्ही पात्र आहात ती निवडा आणि अर्ज सादर करा.",
+        ],
+    },
+}
+
+
+# Labels for the no-LLM fallback card. KB content itself is English, so non-English
+# users also get a notice explaining why the details are shown in English.
+_FALLBACK_LABELS: Dict[str, Dict[str, str]] = {
+    "en": {"application": "Application Process", "documents": "Required Documents",
+           "benefits": "Benefits", "eligibility": "Eligibility", "portal": "Official Portal", "notice": ""},
+    "hi": {"application": "आवेदन प्रक्रिया", "documents": "आवश्यक दस्तावेज", "benefits": "लाभ",
+           "eligibility": "पात्रता", "portal": "आधिकारिक पोर्टल",
+           "notice": "ℹ️ अभी हिंदी में विस्तृत उत्तर उपलब्ध नहीं है। नीचे सत्यापित जानकारी अंग्रेज़ी में दी गई है।"},
+    "gu": {"application": "અરજી પ્રક્રિયા", "documents": "જરૂરી દસ્તાવેજો", "benefits": "લાભ",
+           "eligibility": "પાત્રતા", "portal": "સત્તાવાર પોર્ટલ",
+           "notice": "ℹ️ અત્યારે ગુજરાતીમાં વિગતવાર જવાબ ઉપલબ્ધ નથી. નીચે ખાતરીપૂર્વકની માહિતી અંગ્રેજીમાં આપી છે."},
+    "mr": {"application": "अर्ज प्रक्रिया", "documents": "आवश्यक कागदपत्रे", "benefits": "लाभ",
+           "eligibility": "पात्रता", "portal": "अधिकृत पोर्टल",
+           "notice": "ℹ️ सध्या मराठीत सविस्तर उत्तर उपलब्ध नाही. खाली सत्यापित माहिती इंग्रजीत दिली आहे."},
+}
+_GENERIC_FALLBACK_NOTICE = "ℹ️ A detailed answer in your language is not available right now. Verified details are shown in English below."
+
+
 def _get_api_key() -> str:
     key = os.getenv("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", "") or ""
     return key.strip()
 
 
 def _get_generation_model() -> str:
-    return getattr(settings, "GROQ_GENERATION_MODEL", "llama-3.3-70b-versatile")
+    return getattr(settings, "GROQ_GENERATION_MODEL", "openai/gpt-oss-20b")
 
 
 def is_out_of_scope(query: str) -> bool:
@@ -231,7 +321,7 @@ def _build_rag_prompt(
             f"Do NOT include translations in other languages."
         )
 
-    from app.services.retrieval_service import detect_intent as _det_intent
+    from app.services.retrieval_service_impl import detect_intent as _det_intent
     _query_intent = _det_intent(query)
 
     # Per-intent response formatting instructions
@@ -332,8 +422,8 @@ async def _call_groq(prompt: str, api_key: str, model: str) -> Optional[str]:
         logger.warning("[CHAT] GROQ_API_KEY is missing or unconfigured.")
         return None
 
-    # Model fallback chain (primary model, then fast instant models)
-    models_to_try = [model, "llama-3.1-8b-instant", "llama3-8b-8192"]
+    # Model setup: use requested model (or default openai/gpt-oss-20b)
+    models_to_try = [model] if model else ["openai/gpt-oss-20b"]
     models_to_try = list(dict.fromkeys([m for m in models_to_try if m]))
 
     headers = {
@@ -639,30 +729,33 @@ def _build_fallback_response(
             }
         schemes_dict[s_name]["chunks"].append(c)
 
-    parts = []
+    labels = _FALLBACK_LABELS.get(lang_spec.code, _FALLBACK_LABELS["en"])
+    notice = labels["notice"] if lang_spec.code in _FALLBACK_LABELS else _GENERIC_FALLBACK_NOTICE
+
+    parts = [notice] if notice else []
     for i, (s_name, data) in enumerate(list(schemes_dict.items())[:4], 1):
         summary = _extract_scheme_summary(data["chunks"], s_name)
         card = [f"• **{s_name}**"]
         if summary["application"]:
-            card.append(f"  • **Application Process**: {summary['application']}")
+            card.append(f"  • **{labels['application']}**: {summary['application']}")
         elif summary["documents"]:
-            card.append(f"  • **Required Documents**: {summary['documents']}")
+            card.append(f"  • **{labels['documents']}**: {summary['documents']}")
         elif summary["overview"]:
             card.append(f"  {summary['overview']}")
 
         if summary["benefits"]:
             ben_clean = summary["benefits"].replace(f"Benefits provided by {s_name}:", "").replace("Benefits:", "").strip()
             if ben_clean:
-                card.append(f"  • **Benefits**: {ben_clean}")
+                card.append(f"  • **{labels['benefits']}**: {ben_clean}")
 
         if summary["eligibility"]:
             el_clean = summary["eligibility"].replace(f"Eligibility criteria for {s_name}:", "").replace("Eligibility:", "").strip()
             if el_clean and "Detailed eligibility criteria require verification" not in el_clean:
-                card.append(f"  • **Eligibility**: {el_clean}")
+                card.append(f"  • **{labels['eligibility']}**: {el_clean}")
 
         link_url = data["app_url"] or data["info_url"]
         if link_url:
-            card.append(f"  • **Official Portal**: [{link_url}]({link_url})")
+            card.append(f"  • **{labels['portal']}**: [{link_url}]({link_url})")
 
         parts.append("\n".join(card))
 
@@ -731,7 +824,7 @@ async def generate_grounded_chat_response(
         else:
             opts_str = ", ".join(qu_res.ambiguous_options[:4]) if qu_res.ambiguous_options else "PM-KISAN or another PM scheme"
             msg = f"Could you specify the scheme name? For example, {opts_str}."
-        return msg, [], True
+        return msg, [], False
 
     # 3. Portal Entity Handling (Requirements 13, 14, 19)
     if qu_res.entity_match and qu_res.entity_match.entity.entity_type == "PORTAL":
@@ -745,27 +838,20 @@ async def generate_grounded_chat_response(
             }]
 
         norm_q = qu_res.normalized_query
-        if "apply" in norm_q or "application" in norm_q or "register" in norm_q or "fill" in norm_q:
-            if lang_spec.code == "hi":
-                answer = f"**{ent.canonical_name} ({ent.official_name}) पर आवेदन कैसे करें:**\n1. आधिकारिक पोर्टल पर जाएं: [{ent.official_url}]({ent.official_url})\n2. Applicant Registration पर क्लिक करके यूजर आईडी बनाएं।\n3. अपनी प्रोफाइल विवरण भरें और आवश्यक दस्तावेज अपलोड करें।\n4. अपनी पात्र छात्रवृत्ति योजना का चयन करें और आवेदन जमा करें।"
-            elif lang_spec.code == "gu":
-                answer = f"**{ent.canonical_name} ({ent.official_name}) પર અરજી કેવી રીતે કરવી:**\n1. સત્તાવાર પોર્ટલની મુલાકાત લો: [{ent.official_url}]({ent.official_url})\n2. Applicant Registration દ્વારા યુઝર આઈડી બનાવો.\n3. પ્રોફાઇલ વિગતો ભરો અને જરૂરી દસ્તાવેજો અપલોડ કરો.\n4. તમારી યોગ્ય શિષ્યવૃત્તિ પસંદ કરો અને અરજી કરો."
-            else:
-                answer = f"To apply on **{ent.canonical_name} ({ent.official_name})**:\n1. Visit the official portal: [{ent.official_url}]({ent.official_url})\n2. Register and create an Applicant User ID.\n3. Complete your profile details and upload required documents.\n4. Select your eligible scholarship or welfare scheme and submit."
-        elif "scholarship" in norm_q or "scheme" in norm_q:
-            if lang_spec.code == "hi":
-                answer = f"**{ent.canonical_name} ({ent.official_name})** महाराष्ट्र सरकार का आधिकारिक डीबीटी पोर्टल है, जो मैट्रिक-पूर्व और मैट्रिक-उत्तर छात्रवृत्तियों की मेजबानी करता है।\nआधिकारिक पोर्टल: [{ent.official_url}]({ent.official_url})"
-            elif lang_spec.code == "gu":
-                answer = f"**{ent.canonical_name} ({ent.official_name})** એ મહારાષ્ટ્ર સરકારનું સત્તાવાર DBT પોર્ટલ છે.\nસત્તાવાર પોર્ટલ: [{ent.official_url}]({ent.official_url})"
-            else:
-                answer = f"**{ent.canonical_name} ({ent.official_name})** is the official Direct Benefit Transfer portal of the Government of Maharashtra hosting various Post-Matric and Pre-Matric scholarship schemes.\nOfficial Portal: [{ent.official_url}]({ent.official_url})"
+        lang_key = lang_spec.code if lang_spec.code in _PORTAL_TEXT else "en"
+        text = _PORTAL_TEXT[lang_key]
+        # Each portal is described by its own registry entry — never by another portal's text.
+        description = _PORTAL_DESCRIPTIONS.get(ent.id, {}).get(lang_key) or ent.description or ""
+        link = f"[{ent.official_url}]({ent.official_url})" if ent.official_url else ""
+        header = f"**{ent.canonical_name} ({ent.official_name})**"
+
+        if any(k in norm_q for k in ("apply", "application", "register", "fill")):
+            steps = "\n".join(f"{i}. {s}" for i, s in enumerate(text["steps"], 2))
+            answer = f"{text['apply_title'].format(name=header)}\n{text['visit']} {link}\n{steps}"
         else:
-            if lang_spec.code == "hi":
-                answer = f"**{ent.canonical_name} ({ent.official_name})**:\n{ent.description}\nआधिकारिक पोर्टल: [{ent.official_url}]({ent.official_url})"
-            elif lang_spec.code == "gu":
-                answer = f"**{ent.canonical_name} ({ent.official_name})**:\n{ent.description}\nસત્તાવાર પોર્ટલ: [{ent.official_url}]({ent.official_url})"
-            else:
-                answer = f"**{ent.canonical_name} ({ent.official_name})**:\n{ent.description}\nOfficial Portal: [{ent.official_url}]({ent.official_url})"
+            answer = f"{header}: {description}"
+            if link:
+                answer += f"\n{text['portal']}: {link}"
 
         return answer, citations, True
 
@@ -779,7 +865,7 @@ async def generate_grounded_chat_response(
             msg = "मला समजले नाही. कृपया योजनेचे किंवा पोर्टलचे नाव सांगा."
         else:
             msg = "I'm not sure what you mean. Could you provide the scheme or portal name?"
-        return msg, [], True
+        return msg, [], False
 
     entity, target_sec = extract_query_entity_and_section(query, conversation_context=conversation_context)
 
@@ -788,13 +874,13 @@ async def generate_grounded_chat_response(
                   "BENEFITS", "FINANCIAL_DETAILS", "DEADLINE", "STATUS",
                   "RENEWAL", "CONTACT", "FAQ", "APPLICATION_CHANNEL"] and not entity:
         if lang_spec.code == "hi":
-            return "आप किस छात्रवृत्ति या सरकारी योजना के बारे में जानना चाहते हैं? कृपया योजना का नाम बताएं।", [], True
+            return "आप किस छात्रवृत्ति या सरकारी योजना के बारे में जानना चाहते हैं? कृपया योजना का नाम बताएं।", [], False
         elif lang_spec.code == "gu":
-            return "તમે કયી શિષ્યવૃત્તિ અથવા સરકારી યોજના વિશે જાણવા માંગો છો? કૃપા યોજનાનું નામ જણાવો.", [], True
+            return "તમે કયી શિષ્યવૃત્તિ અથવા સરકારી યોજના વિશે જાણવા માંગો છો? કૃપા યોજનાનું નામ જણાવો.", [], False
         elif lang_spec.code == "mr":
-            return "तुम्हाला कोणत्या शिष्यवृत्ती किंवा सरकारी योजनेबद्दल जाणून घ्यायचे आहे? कृपया योजनेचे नाव सांगा.", [], True
+            return "तुम्हाला कोणत्या शिष्यवृत्ती किंवा सरकारी योजनेबद्दल जाणून घ्यायचे आहे? कृपया योजनेचे नाव सांगा.", [], False
         else:
-            return "Which scholarship or government scheme are you asking about? Please mention the scheme name.", [], True
+            return "Which scholarship or government scheme are you asking about? Please mention the scheme name.", [], False
 
     if not chunks:
         return lang_spec.not_found_msg, [], False
@@ -816,6 +902,21 @@ async def generate_grounded_chat_response(
 
     fallback_answer = _build_fallback_response(chunks, lang_spec)
     return fallback_answer, citations, True
+
+
+# Whisper verbose_json reports the spoken language as a lowercase English name (or an ISO code).
+_WHISPER_LANGUAGE_CODES = {
+    "english": "en", "en": "en",
+    "hindi": "hi", "hi": "hi",
+    "gujarati": "gu", "gu": "gu",
+    "marathi": "mr", "mr": "mr",
+    "bengali": "bn", "bn": "bn",
+    "tamil": "ta", "ta": "ta",
+    "telugu": "te", "te": "te",
+    "kannada": "kn", "kn": "kn",
+    "malayalam": "ml", "ml": "ml",
+    "punjabi": "pa", "panjabi": "pa", "pa": "pa",
+}
 
 
 async def transcribe_audio_with_groq(
@@ -885,8 +986,13 @@ async def transcribe_audio_with_groq(
                 transcribed_text = res_data.get("text", "").strip()
                 detected_lang = res_data.get("language", language or "en")
                 
-                # Determine ISO language code from transcribed text / Whisper detection
-                detected_code = detect_query_language(transcribed_text, language)
+                # Prefer Whisper's own spoken-language detection (it separates Hindi from Marathi,
+                # which share a script); fall back to script inspection of the transcript.
+                whisper_code = _WHISPER_LANGUAGE_CODES.get(str(detected_lang).strip().lower())
+                if whisper_code and language_registry.get_spec(whisper_code).code == whisper_code:
+                    detected_code = whisper_code
+                else:
+                    detected_code = detect_query_language(transcribed_text, language)
                 
                 return {
                     "success": True,

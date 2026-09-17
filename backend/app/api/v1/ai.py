@@ -12,7 +12,10 @@ Architecture:
   The LLM never decides eligibility — only the deterministic rule engine does.
 """
 
+import asyncio
 import logging
+import time
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, Form, Response
@@ -41,8 +44,9 @@ from app.schemas.ai import (
 )
 from app.schemas.common import APIResponse
 from app.services.eligibility_service import evaluate_scheme_eligibility
-from app.services.retrieval_service import retrieve_relevant_chunks, detect_intent, expand_query
+from app.services.retrieval_service_impl import retrieve_relevant_chunks, detect_intent, expand_query
 from app.services.recommendation_service import generate_recommendations
+from app.services.language_service import language_registry
 from app.services.knowledge_base_service import (
     index_all_schemes,
     index_scheme,
@@ -251,17 +255,32 @@ async def chat_assistant(
       4. Grounded response generation (LLM / verified knowledge fallback)
       5. Safe response serialization with fallback error boundaries
     """
+    t_start = time.time()
     try:
-        from app.services.retrieval_service import detect_intent, extract_query_entity_and_section, retrieve_relevant_chunks
+        from app.services.retrieval_service_impl import detect_intent, extract_query_entity_and_section, retrieve_relevant_chunks
         
-        logger.info(f"[CHAT] Request received: question='{req.question[:80]}', language='{req.language}'")
-        logger.info(f"[CHAT] Language detected: {req.language}")
-        
+        # 1. DB Connection Check Timing
+        t_db_start = time.time()
+        bind = db.get_bind()
+        db_backend = getattr(bind.dialect, "name", "postgresql")
+        t_db = round((time.time() - t_db_start) * 1000, 2)
+        logger.info(f"[CHAT] POST /api/v1/ai/chat received: question='{req.question[:80]}'")
+        logger.info(f"[CHAT] database connection ({db_backend}): {t_db} ms")
+
+        # 2. Query Understanding & Language Detection
+        t_qu_start = time.time()
+        reply_lang = language_registry.detect_language(req.question, req.language).code
         intent = detect_intent(req.question, conversation_context=req.conversation_context)
-        logger.info(f"[CHAT] Intent detected: {intent}")
-        
         entity, target_section = extract_query_entity_and_section(req.question, conversation_context=req.conversation_context)
-        logger.info(f"[CHAT] Entity detected: {entity}")
+        t_qu = round((time.time() - t_qu_start) * 1000, 2)
+        logger.info(f"[CHAT] query understanding: {t_qu} ms (intent={intent}, entity={entity})")
+
+        # 3. Profile / Beneficiary Extraction
+        t_prof_start = time.time()
+        from app.services.query_understanding_service_impl import extract_profile_attributes
+        prof_attrs = extract_profile_attributes(req.question)
+        t_prof = round((time.time() - t_prof_start) * 1000, 2)
+        logger.info(f"[CHAT] Profile/beneficiary extraction: {t_prof} ms (beneficiary={prof_attrs.get('beneficiary')}, occupation={prof_attrs.get('occupation')})")
 
         # Initialize web_search_used early to prevent NameError in exception path
         web_search_used = False
@@ -269,23 +288,19 @@ async def chat_assistant(
         # ── Step 1: Retrieve relevant knowledge (Skip for greetings/thanks/goodbye) ───
         chunks = []
         if intent not in ["GREETING", "THANKS", "GOODBYE", "AMBIGUOUS", "UNKNOWN", "PORTAL_INFO", "PORTAL_APPLICATION"]:
-            # Specific-info queries (APPLICATION_PROCESS, ELIGIBILITY, etc.) without an explicit entity
-            # should NOT return unrelated schemes.
             specific_info_intents = [
                 "APPLICATION_PROCESS", "ELIGIBILITY", "REQUIRED_DOCUMENTS",
                 "BENEFITS", "FINANCIAL_DETAILS", "DEADLINE", "STATUS",
                 "RENEWAL", "CONTACT", "FAQ", "APPLICATION_CHANNEL"
             ]
 
-            # Resolve entity from conversation context for follow-up questions
             if not entity and req.conversation_context and req.conversation_context.get("last_scheme"):
                 entity = req.conversation_context.get("last_scheme")
 
             if intent in specific_info_intents and not entity:
-                # Entity-less query for specific application/document steps -> ask user for scheme name
                 chunks = []
             else:
-                logger.info("[CHAT] RAG retrieval started")
+                t_ret_start = time.time()
                 chunks = await retrieve_relevant_chunks(
                     db,
                     query=req.question,
@@ -295,7 +310,17 @@ async def chat_assistant(
                     top_k=8,
                     conversation_context=req.conversation_context,
                 )
-                logger.info(f"[CHAT] RAG retrieval completed: retrieved {len(chunks)} chunks")
+                t_ret = round((time.time() - t_ret_start) * 1000, 2)
+                logger.info(f"[CHAT] PostgreSQL/pgvector retrieval: {t_ret} ms")
+                logger.info(f"[CHAT] retrieved: {len(chunks)} chunks")
+
+                relevance_query = language_registry.translate_query_for_retrieval(
+                    req.question, language_registry.get_spec(reply_lang)
+                )
+                is_relevant, rel_score = evaluate_chunk_relevance(relevance_query, chunks)
+                if chunks and not is_relevant:
+                    logger.info(f"[CHAT] Retrieved chunks below relevance bar (score={rel_score}) — discarding")
+                    chunks = []
 
         # ── Step 2: Direct scheme DB fallback (if knowledge base empty and entity present) ─
         if not chunks and intent not in ["GREETING", "THANKS"] and entity:
@@ -394,6 +419,7 @@ async def chat_assistant(
                 logger.warning(f"Could not load profile for personalization: {e}")
 
         # ── Step 4: Generate grounded answer ──────────────────────────────────
+        t_groq_start = time.time()
         logger.info("[CHAT] Groq request started")
         answer_text, citations_data, is_grounded = await generate_grounded_chat_response(
             query=req.question,
@@ -402,7 +428,10 @@ async def chat_assistant(
             eligibility_context=eligibility_context,
             conversation_context=req.conversation_context,
         )
-        logger.info("[CHAT] Groq response received")
+        t_groq = round((time.time() - t_groq_start) * 1000, 2)
+        t_total = round((time.time() - t_start) * 1000, 2)
+        logger.info(f"[CHAT] Groq: {t_groq} ms")
+        logger.info(f"[CHAT] total: {t_total} ms")
 
         # Determine if web search was used based on chunks metadata
         web_search_used = any(c.get("is_web_search") for c in chunks if isinstance(c, dict))
@@ -475,6 +504,7 @@ async def chat_assistant(
             data=AIChatResponse(
                 answer=answer_text,
                 is_grounded=is_grounded,
+                language=reply_lang,
                 citations=safe_citations,
                 retrieved_schemes=retrieved_schemes,
                 confidence_score=avg_score,
@@ -491,7 +521,7 @@ async def chat_assistant(
         logger.error(f"Unhandled error in chat_assistant endpoint: {exc}\n{tb}")
 
         # Fallback response for unexpected runtime failures — use a safe generic error message
-        lang_code = req.language or "en"
+        lang_code = language_registry.detect_language(req.question, req.language).code
         fallback_answer = (
             "I encountered an unexpected error processing your request. "
             "Please try again. If the issue persists, the server may be temporarily unavailable."
@@ -509,6 +539,7 @@ async def chat_assistant(
             data=AIChatResponse(
                 answer=fallback_answer,
                 is_grounded=False,
+                language=lang_code if lang_code in ("hi", "gu", "mr") else "en",
                 citations=[],
                 retrieved_schemes=[],
                 confidence_score=0.0,
@@ -923,7 +954,7 @@ async def test_query_understanding_suite_v2_endpoint():
     """Run automated test suite directly within endpoint context with dynamic reloads."""
     import importlib
     import app.services.query_understanding_service as qus
-    import app.services.retrieval_service as rs
+    import app.services.retrieval_service_impl as rs
     import app.services.groq_service as gs
 
     importlib.reload(qus)
@@ -1041,7 +1072,7 @@ async def test_query_understanding_suite_endpoint():
     """Run automated test suite covering all 20 requirement categories."""
     import importlib
     import app.services.query_understanding_service as qus
-    import app.services.retrieval_service as rs
+    import app.services.retrieval_service_impl as rs
     import app.services.groq_service as gs
     import scripts.test_query_understanding_suite as tts
 
@@ -1363,7 +1394,7 @@ async def test_formatting_live(db: AsyncSession = Depends(get_db)):
         {"test_id": "F", "q": "How do I apply for a scholarship?", "lang": "en"},
     ]
     results = []
-    from app.services.retrieval_service import retrieve_relevant_chunks, detect_intent, extract_query_entity_and_section
+    from app.services.retrieval_service_impl import retrieve_relevant_chunks, detect_intent, extract_query_entity_and_section
     for item in test_queries:
         query_text = item["q"]
         try:

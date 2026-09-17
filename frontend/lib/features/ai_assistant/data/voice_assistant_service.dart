@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,13 @@ class VoiceAssistantService {
   String? _lastRecognizedText;
   VoidCallback? _activeOnDone;
   Function(String)? _activeOnError;
+  VoidCallback? _activeOnAutoStop;
+  bool _autoStopFired = false;
+  bool _isStopping = false;
+  Timer? _maxDurationTimer;
+
+  /// Longest a single voice query may run before it is stopped and sent automatically.
+  static const Duration maxListenDuration = Duration(seconds: 20);
 
   bool get isListening => _isListening;
   bool get isSpeaking => _isSpeaking;
@@ -56,6 +64,13 @@ class VoiceAssistantService {
       _isSpeechInitialized = await _speech.initialize(
         onError: (val) {
           debugPrint('[VOICE] Speech error event: ${val.errorMsg}');
+          // While audio is being recorded, a device recognizer failure (e.g. no
+          // Gujarati language pack) is not fatal: keep recording and let Whisper
+          // transcribe it when the user taps Done or the time limit is reached.
+          if (_recordingPath != null) {
+            debugPrint('[VOICE] Device STT failed; continuing with recorded audio for Whisper');
+            return;
+          }
           final msg = val.errorMsg.toLowerCase();
           if (!msg.contains('speech_timeout') && !msg.contains('no_match') && !msg.contains('error_busy')) {
             _activeOnError?.call(val.errorMsg);
@@ -63,6 +78,12 @@ class VoiceAssistantService {
         },
         onStatus: (val) {
           debugPrint('[VOICE] Speech status change: $val');
+          // The device recognizer ends after the user pauses. If it heard something,
+          // finish the query automatically instead of waiting for a Done tap.
+          if ((val == 'done' || val == 'notListening') &&
+              (_lastRecognizedText?.isNotEmpty ?? false)) {
+            _triggerAutoStop('speech ended ($val)');
+          }
         },
       );
       return _isSpeechInitialized;
@@ -70,6 +91,13 @@ class VoiceAssistantService {
       debugPrint('[VOICE] Speech init failed: $e');
       return false;
     }
+  }
+
+  void _triggerAutoStop(String reason) {
+    if (!_isListening || _autoStopFired || _isStopping) return;
+    _autoStopFired = true;
+    debugPrint('[VOICE] Auto-stop: $reason');
+    _activeOnAutoStop?.call();
   }
 
   String _getLocaleId(String languageCode) {
@@ -101,6 +129,10 @@ class VoiceAssistantService {
     required Function(String recognizedText, bool isFinal) onResult,
     required VoidCallback onDone,
     Function(String errorMessage)? onError,
+    /// Called when listening should end without a Done tap (user paused after
+    /// speaking, or [maxListenDuration] elapsed). The caller should run its
+    /// normal stop flow, i.e. call [stopListening].
+    VoidCallback? onAutoStop,
     Future<Map<String, dynamic>> Function(List<int> bytes, String filename)? transcribeApi,
   }) async {
     debugPrint('[VOICE] Microphone button pressed');
@@ -108,6 +140,8 @@ class VoiceAssistantService {
 
     _activeOnDone = onDone;
     _activeOnError = onError;
+    _activeOnAutoStop = onAutoStop;
+    _autoStopFired = false;
     _lastRecognizedText = null;
 
     // 1. Start audio file recording to capture raw audio for Groq Whisper
@@ -126,6 +160,8 @@ class VoiceAssistantService {
     }
 
     _isListening = true;
+    _maxDurationTimer?.cancel();
+    _maxDurationTimer = Timer(maxListenDuration, () => _triggerAutoStop('time limit reached'));
     final targetLocale = _getLocaleId(languageCode);
 
     // 2. Start real-time speech-to-text listener
@@ -153,21 +189,47 @@ class VoiceAssistantService {
     }
   }
 
+  /// Stops listening. When [transcribeApi] is given, the recording is always sent to
+  /// Whisper (without a language hint) so the spoken language is detected from the
+  /// audio itself; the device transcript is only a live preview / fallback.
   Future<void> stopListening({
     Function(String recognizedText, bool isFinal)? onResult,
+    Function(String languageCode)? onLanguageDetected,
     Future<Map<String, dynamic>> Function(List<int> bytes, String filename)? transcribeApi,
     String languageCode = 'en',
   }) async {
     debugPrint('[VOICE] Stop requested');
-    if (_isListening) {
-      try {
-        await _speech.stop();
-      } catch (e) {
-        debugPrint('[VOICE] Error during speech.stop(): $e');
+    if (_isStopping) return;
+    _isStopping = true;
+    _maxDurationTimer?.cancel();
+    _maxDurationTimer = null;
+    _activeOnAutoStop = null;
+
+    try {
+      if (_isListening) {
+        // Mark as stopped first so status events fired by stop() don't re-trigger auto-stop.
+        _isListening = false;
+        try {
+          await _speech.stop();
+        } catch (e) {
+          debugPrint('[VOICE] Error during speech.stop(): $e');
+        }
       }
-      _isListening = false;
+      await _finishRecording(onResult, onLanguageDetected, transcribeApi);
+    } finally {
+      _isStopping = false;
     }
 
+    final callback = _activeOnDone;
+    _activeOnDone = null;
+    callback?.call();
+  }
+
+  Future<void> _finishRecording(
+    Function(String recognizedText, bool isFinal)? onResult,
+    Function(String languageCode)? onLanguageDetected,
+    Future<Map<String, dynamic>> Function(List<int> bytes, String filename)? transcribeApi,
+  ) async {
     String? recordedFile = _recordingPath;
     _recordingPath = null;
 
@@ -179,13 +241,20 @@ class VoiceAssistantService {
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
           debugPrint('[VOICE] Audio recorded: ${bytes.length} bytes');
-          if ((_lastRecognizedText == null || _lastRecognizedText!.isEmpty) && transcribeApi != null && bytes.length > 500) {
+          if (transcribeApi != null && bytes.length > 500) {
             debugPrint('[VOICE] Sending audio bytes to Groq Whisper STT endpoint...');
-            final resp = await transcribeApi(bytes, 'voice_query.m4a');
-            final text = resp['text'] as String?;
-            if (text != null && text.isNotEmpty) {
-              debugPrint('[VOICE] Groq Whisper transcribed: "$text"');
-              onResult?.call(text, true);
+            try {
+              final resp = await transcribeApi(bytes, 'voice_query.m4a');
+              final text = resp['text'] as String?;
+              final lang = resp['language'] as String?;
+              if (text != null && text.isNotEmpty) {
+                debugPrint('[VOICE] Groq Whisper transcribed: "$text" (language: $lang)');
+                if (lang != null && lang.isNotEmpty) onLanguageDetected?.call(lang);
+                onResult?.call(text, true);
+              }
+            } catch (e) {
+              // Keep the device transcript already shown in the input field.
+              debugPrint('[VOICE] Whisper transcription failed, using device STT text: $e');
             }
           }
         }
@@ -193,10 +262,6 @@ class VoiceAssistantService {
         debugPrint('[VOICE] AudioRecorder stop/transcribe warning: $e');
       }
     }
-
-    final callback = _activeOnDone;
-    _activeOnDone = null;
-    callback?.call();
   }
 
   Future<void> speak(String text, {required String languageCode}) async {

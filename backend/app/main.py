@@ -75,44 +75,60 @@ run_sqlite_schema_migrations()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-create tables for development/testing if using SQLite
-    if "sqlite" in settings.DATABASE_URL:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            from sqlalchemy import text
-            for col in ["source_name", "official_scheme_url", "official_portal_url"]:
-                try:
-                    await conn.execute(text(f"ALTER TABLE knowledge_chunks ADD COLUMN {col} TEXT"))
-                except Exception:
-                    pass
-            for col in ["source_url", "source_name", "official_scheme_url", "application_url", "official_portal_url"]:
-                try:
-                    await conn.execute(text(f"ALTER TABLE schemes ADD COLUMN {col} TEXT"))
-                except Exception:
-                    pass
+    # ── Database Verification & Startup Audit ───────────────────────────────────
+    from app.core.database import AsyncSessionLocal, engine
+    from sqlalchemy import text, select, func
+    import re
 
-        try:
-            from scripts.fix_sqlite_schema import migrate
-            migrate()
-        except Exception as e:
-            logger.warning(f"SQLite schema migration skipped: {e}")
+    raw_db_url = str(engine.url)
+    safe_db_url = re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", raw_db_url)
+    dialect_name = engine.dialect.name  # e.g. "postgresql" for asyncpg
 
-        # Seed Schemora Glossary into Knowledge Base
-        try:
-            from app.core.database import AsyncSessionLocal
-            from app.services.glossary_service import ensure_glossary_indexed
-            async with AsyncSessionLocal() as session:
-                await ensure_glossary_indexed(session)
-            logger.info("Schemora Authoritative Glossary seeded into Knowledge Base on startup.")
-        except Exception as e:
-            logger.warning(f"Glossary seeding on startup skipped: {e}")
+    if dialect_name != "postgresql":
+        raise RuntimeError(
+            f"Database engine is '{dialect_name}'. Schemora architecture requires PostgreSQL + pgvector exclusively."
+        )
+
+    try:
+        async with AsyncSessionLocal() as session:
+            # Enable/verify pgvector extension
+            await session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            await session.commit()
+
+            chunk_cnt_res = await session.execute(text("SELECT COUNT(*) FROM knowledge_chunks"))
+            total_chunks = chunk_cnt_res.scalar() or 0
+
+            scheme_cnt_res = await session.execute(text("SELECT COUNT(*) FROM schemes"))
+            total_schemes = scheme_cnt_res.scalar() or 0
+
+            idx_res = await session.execute(text("SELECT COUNT(*) FROM knowledge_chunks WHERE embedding_vec IS NOT NULL"))
+            indexed_chunks = idx_res.scalar() or 0
+
+            logger.info(
+                f"=== POSTGRESQL + PGVECTOR VERIFIED AT RUNTIME: backend='{dialect_name}' | "
+                f"total_schemes={total_schemes} | total_chunks={total_chunks} | indexed_chunks={indexed_chunks} ==="
+            )
+    except Exception as db_err:
+        logger.error(f"=== CRITICAL POSTGRESQL CONNECTION ERROR: {db_err} ===")
+        raise RuntimeError(
+            f"Failed to connect to PostgreSQL database ({safe_db_url}): {db_err}. "
+            "Please check PostgreSQL connection URL and credentials in backend/.env."
+        ) from db_err
+
+    # Seed Schemora Glossary into Knowledge Base
+    try:
+        from app.services.glossary_service import ensure_glossary_indexed
+        async with AsyncSessionLocal() as session:
+            await ensure_glossary_indexed(session)
+        logger.info("Schemora Authoritative Glossary seeded into Knowledge Base on startup.")
+    except Exception as e:
+        logger.warning(f"Glossary seeding on startup skipped: {e}")
+
 
     # Check if schemes already exist to prevent slow ingestion lock on every uvicorn reload
     already_seeded = False
     try:
-        from app.core.database import AsyncSessionLocal
         from app.models.scheme import Scheme
-        from sqlalchemy import select, func
         async with AsyncSessionLocal() as session:
             count_res = await session.execute(select(func.count()).select_from(Scheme))
             scheme_count = count_res.scalar() or 0

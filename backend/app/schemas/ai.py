@@ -57,6 +57,7 @@ class AIChatRequest(BaseModel):
 class AIChatResponse(BaseModel):
     answer: str
     is_grounded: bool
+    language: str = Field("en", description="Language code the answer is written in; use it for TTS playback")
     citations: List[SourceCitation] = []
 
     # Extended RAG response fields

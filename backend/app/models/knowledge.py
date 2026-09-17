@@ -83,23 +83,10 @@ class KnowledgeChunk(Base):
     embedding_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     metadata_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    # pgvector embedding column for native PostgreSQL vector similarity search
-    # Uses dialect-aware TypeDecorator so SQLite dev DBs compile cleanly while
-    # PostgreSQL production DBs use native HNSW pgvector Vector(768).
+    # pgvector embedding column for native PostgreSQL vector similarity search (768 dimensions)
     try:
-        from sqlalchemy.types import TypeDecorator
-        from pgvector.sqlalchemy import Vector as PgVector
-
-        class SafeVector(TypeDecorator):
-            impl = Text
-            cache_ok = True
-
-            def load_dialect_impl(self, dialect):
-                if dialect.name == "postgresql":
-                    return dialect.type_descriptor(PgVector(768))
-                return dialect.type_descriptor(Text())
-
-        embedding_vec = mapped_column(SafeVector(), nullable=True)
+        from pgvector.sqlalchemy import Vector
+        embedding_vec = mapped_column(Vector(768), nullable=True)
     except Exception:
         embedding_vec = mapped_column(Text, nullable=True)
 

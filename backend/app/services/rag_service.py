@@ -116,5 +116,5 @@ async def retrieve_relevant_chunks(
     This function signature is preserved for backward compatibility with ai.py.
     It internally delegates to the new retrieval_service logic.
     """
-    from app.services.retrieval_service import retrieve_relevant_chunks as _retrieve
+    from app.services.retrieval_service_impl import retrieve_relevant_chunks as _retrieve
     return await _retrieve(db, query, scheme_id=scheme_id, top_k=top_k)

@@ -318,7 +318,7 @@ async def generate_recommendations(
     vec_query = f"{norm_profile['occupation']} schemes in {norm_profile['state']} for {norm_profile['gender']} {norm_profile['category']}"
     vec_matches = []
     try:
-        from app.services.retrieval_service import retrieve_relevant_chunks
+        from app.services.retrieval_service_impl import retrieve_relevant_chunks
         vec_chunks = await retrieve_relevant_chunks(db, query=vec_query, state=norm_profile["state"], top_k=10)
         vec_matches = [c.get("scheme_id") for c in vec_chunks if c.get("scheme_id")]
     except Exception as err:
